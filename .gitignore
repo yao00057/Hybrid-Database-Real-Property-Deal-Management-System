@@ -5,23 +5,18 @@ __pycache__/
 *.so
 .Python
 venv/
-env/
-.venv/
-*.egg-info/
+ENV/
+.env
 
 # Node
 node_modules/
 dist/
 .npm
-
-# Environment
-.env
-.env.local
-.env.*.local
+*.log
 
 # IDE
-.vscode/
 .idea/
+.vscode/
 *.swp
 *.swo
 
@@ -29,12 +24,10 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Docker
 *.log
-logs/
 
-# Docker volumes (if local)
-data/
-
-# Build
-build/
+# Local data
+mysql_data/
+mongo_data/
+redis_data/
