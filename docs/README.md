@@ -18,6 +18,18 @@
 
 ---
 
+## Project Status
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1: Foundation | ✅ Complete | Docker, Backend skeleton, Frontend skeleton |
+| Phase 2: Core Features | 🔄 In Progress | User, Property, Deal, Transaction CRUD |
+| Phase 3: Polish | ⏳ Pending | Auth, Dashboard, Testing |
+
+**Last Updated:** January 2026
+
+---
+
 ## Quick Overview
 
 ### What is this project?
@@ -61,18 +73,19 @@ cd ~/real-estate-system
 docker compose up -d
 
 # 2. Start backend (in one terminal)
+cd ~/real-estate-system
 source venv/bin/activate
 cd backend
-python main.py
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 # 3. Start frontend (in another terminal)
-cd frontend
+cd ~/real-estate-system/frontend
 npm run dev
 
 # 4. Access the application
-# Frontend:  http://localhost:5173
-# API Docs:  http://localhost:8000/docs
-# phpMyAdmin: http://localhost:8080
+# Frontend:     http://localhost:5173
+# API Docs:     http://localhost:8000/docs
+# phpMyAdmin:   http://localhost:8080
 # Mongo Express: http://localhost:8081
 ```
 
