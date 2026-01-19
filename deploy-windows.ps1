@@ -6,7 +6,7 @@
 #Requires -RunAsAdministrator
 
 param(
-    [string]$InstallPath = "$env:USERPROFILE\real-estate-system"
+    [string]$InstallPath = "$env:USERPROFILE\Desktop\real-estate-system"
 )
 
 $ErrorActionPreference = "Stop"
@@ -318,13 +318,12 @@ Write-Host "         Deployment Completed Successfully!" -ForegroundColor Green
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Project Location: $InstallPath" -ForegroundColor Cyan
+Write-Host "(on your Desktop for easy access)" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Quick Start Commands:" -ForegroundColor Yellow
 Write-Host "----------------------------------------------------------------"
-Write-Host "  Start Everything:    " -NoNewline; Write-Host "$InstallPath\start-all.bat" -ForegroundColor White
-Write-Host "  Stop Everything:     " -NoNewline; Write-Host "$InstallPath\stop-all.bat" -ForegroundColor White
-Write-Host "  Start Backend Only:  " -NoNewline; Write-Host "$InstallPath\start-backend.bat" -ForegroundColor White
-Write-Host "  Start Frontend Only: " -NoNewline; Write-Host "$InstallPath\start-frontend.bat" -ForegroundColor White
+Write-Host "  Start Everything:    Double-click 'start-all.bat' on Desktop" -ForegroundColor White
+Write-Host "  Stop Everything:     Double-click 'stop-all.bat' on Desktop" -ForegroundColor White
 Write-Host "----------------------------------------------------------------"
 Write-Host ""
 Write-Host "Access URLs (after running start-all.bat):" -ForegroundColor Yellow
@@ -343,10 +342,11 @@ Write-Host "| MongoDB:  No authentication (development mode)              |" -Fo
 Write-Host "----------------------------------------------------------------"
 Write-Host ""
 Write-Host "How to Use:" -ForegroundColor Yellow
-Write-Host "  1. Run start-all.bat to start all services"
-Write-Host "  2. Open http://localhost:5173 in your browser"
-Write-Host "  3. Register a new account or use the API at /docs"
-Write-Host "  4. When done, run stop-all.bat to stop all services"
+Write-Host "  1. Go to Desktop and open 'real-estate-system' folder"
+Write-Host "  2. Double-click 'start-all.bat' to start all services"
+Write-Host "  3. Open http://localhost:5173 in your browser"
+Write-Host "  4. Register a new account or use the API at /docs"
+Write-Host "  5. When done, double-click 'stop-all.bat' to stop all services"
 Write-Host ""
 Write-Host "Would you like to start the application now? (Y/N)" -ForegroundColor Yellow
 $response = Read-Host
