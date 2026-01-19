@@ -59,16 +59,21 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 **Or manually:**
 
 ```powershell
-# 1. Clone the repository
-git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git $env:USERPROFILE\real-estate-system
+# 1. Clone the repository (to Desktop)
+git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git $env:USERPROFILE\Desktop\real-estate-system
 
 # 2. Run the deployment script (as Administrator)
-cd $env:USERPROFILE\real-estate-system
+cd $env:USERPROFILE\Desktop\real-estate-system
 Set-ExecutionPolicy Bypass -Scope Process -Force
 .\deploy-windows.ps1
 ```
 
 **Note:** If Docker Desktop is not installed, the script will install it and ask you to restart your computer. After restart, run the script again.
+
+**Windows Install Location:** The project will be installed to your Desktop at:
+```
+C:\Users\<YourUsername>\Desktop\real-estate-system\
+```
 
 ---
 
@@ -103,7 +108,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 
 ## Windows Quick Commands
 
-After deployment on Windows, use these scripts in the project folder:
+After deployment on Windows, find these scripts on your **Desktop** in the `real-estate-system` folder:
 
 | Script | Description |
 |--------|-------------|
@@ -111,6 +116,8 @@ After deployment on Windows, use these scripts in the project folder:
 | `stop-all.bat` | Stop all services |
 | `start-backend.bat` | Start only the backend API |
 | `start-frontend.bat` | Start only the frontend |
+
+**Quick Start:** Just double-click `start-all.bat` on your Desktop to launch everything!
 
 ---
 

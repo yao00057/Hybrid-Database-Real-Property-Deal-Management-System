@@ -94,6 +94,10 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 & "$env:TEMP\deploy-windows.ps1"
 ```
 
+**Windows Install Location:** `C:\Users\<YourUsername>\Desktop\real-estate-system\`
+
+After installation, just double-click `start-all.bat` on your Desktop to launch!
+
 The scripts will automatically:
 1. Install Docker, Node.js, Python (if needed)
 2. Start database containers
