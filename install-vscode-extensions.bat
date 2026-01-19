@@ -1,0 +1,3 @@
+@echo off
+echo Installing VS Code extensions...
+powershell -ExecutionPolicy Bypass -File "%~dp0install-vscode-extensions.ps1"

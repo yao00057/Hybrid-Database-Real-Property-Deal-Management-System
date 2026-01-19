@@ -453,3 +453,204 @@ Double-click seed-data.bat in the project folder
 | Seller Lawyer | sellerlawyer2@test.com | test123 |
 
 Use these accounts to quickly test the application without manually registering users.
+
+---
+
+## Developer Guide (For Teammates)
+
+This section helps new developers set up their environment and start contributing to the project.
+
+### Recommended IDE: Visual Studio Code
+
+**Download**: https://code.visualstudio.com/
+
+VS Code is free, lightweight, and handles all parts of this project (Python, Vue, TypeScript, Docker).
+
+### One-Key Extension Install
+
+After installing VS Code, run the appropriate script to install all required extensions:
+
+#### Windows (PowerShell)
+```powershell
+# Run this in PowerShell
+code --install-extension ms-python.python
+code --install-extension ms-python.pylint
+code --install-extension Vue.volar
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension ms-azuretools.vscode-docker
+code --install-extension mongodb.mongodb-vscode
+code --install-extension mtxr.sqltools
+code --install-extension mtxr.sqltools-driver-mysql
+echo "All extensions installed!"
+```
+
+#### Ubuntu/Mac (Terminal)
+```bash
+# Run this in terminal
+code --install-extension ms-python.python && code --install-extension ms-python.pylint && code --install-extension Vue.volar && code --install-extension dbaeumer.vscode-eslint && code --install-extension esbenp.prettier-vscode && code --install-extension ms-azuretools.vscode-docker && code --install-extension mongodb.mongodb-vscode && code --install-extension mtxr.sqltools && code --install-extension mtxr.sqltools-driver-mysql && echo "All extensions installed!"
+```
+
+### Extensions Explained
+
+| Extension | Purpose |
+|-----------|---------|
+| Python | Python language support, debugging, IntelliSense |
+| Pylint | Python code linting |
+| Vue - Official (Volar) | Vue 3 syntax highlighting, IntelliSense |
+| ESLint | JavaScript/TypeScript linting |
+| Prettier | Auto code formatting |
+| Docker | Docker file support, container management |
+| MongoDB for VS Code | Browse MongoDB collections |
+| SQLTools + MySQL Driver | Browse MySQL databases |
+
+### Clone and Open Project
+
+```bash
+# Clone the repository
+git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git
+
+# Open in VS Code
+cd Hybrid-Database-Real-Property-Deal-Management-System
+code .
+```
+
+### Project Structure
+
+```
+real-estate-system/
+├── backend/                 # Python FastAPI Backend
+│   ├── app/
+│   │   ├── core/           # Config, security, types
+│   │   ├── database/       # MongoDB & MySQL connections
+│   │   ├── models/         # SQLAlchemy models (MySQL)
+│   │   ├── routers/        # API endpoints
+│   │   ├── schemas/        # Pydantic schemas
+│   │   └── services/       # Business logic
+│   ├── main.py             # FastAPI app entry point
+│   ├── requirements.txt    # Python dependencies
+│   └── .env.example        # Environment variables template
+│
+├── frontend/               # Vue 3 Frontend
+│   ├── src/
+│   │   ├── api/           # Axios API calls
+│   │   ├── components/    # Reusable Vue components
+│   │   ├── router/        # Vue Router config
+│   │   ├── views/         # Page components
+│   │   ├── App.vue        # Root component
+│   │   └── main.ts        # Vue app entry point
+│   ├── package.json       # Node dependencies
+│   └── vite.config.ts     # Vite configuration
+│
+├── docs/                   # Project documentation
+├── docker-compose.yml      # Database containers
+├── deploy.sh              # Ubuntu deployment script
+├── deploy-windows.ps1     # Windows deployment script
+├── seed-data.sh           # Linux test data script
+└── seed-data.ps1          # Windows test data script
+```
+
+### Development Workflow
+
+#### 1. Start Databases (Docker)
+```bash
+docker compose up -d
+```
+
+#### 2. Start Backend (Terminal 1)
+```bash
+cd backend
+# Create virtual environment (first time only)
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies (first time only)
+pip install -r requirements.txt
+
+# Copy .env file (first time only)
+cp .env.example .env
+
+# Start server
+uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+#### 3. Start Frontend (Terminal 2)
+```bash
+cd frontend
+
+# Install dependencies (first time only)
+npm install
+
+# Start dev server
+npm run dev -- --host --port 5173
+```
+
+#### 4. Access the Application
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8001
+- API Docs: http://localhost:8001/docs
+- phpMyAdmin: http://localhost:8080
+- Mongo Express: http://localhost:8081
+
+### Making Changes
+
+#### Backend (Python/FastAPI)
+- API endpoints: `backend/app/routers/`
+- Business logic: `backend/app/services/`
+- Data schemas: `backend/app/schemas/`
+- Database models: `backend/app/models/`
+
+#### Frontend (Vue 3/TypeScript)
+- Pages: `frontend/src/views/`
+- Components: `frontend/src/components/`
+- API calls: `frontend/src/api/index.ts`
+- Routes: `frontend/src/router/index.ts`
+
+### Git Workflow
+
+```bash
+# Create a new branch for your feature
+git checkout -b feature/your-feature-name
+
+# Make your changes...
+
+# Stage and commit
+git add .
+git commit -m "Add: description of your changes"
+
+# Push to GitHub
+git push origin feature/your-feature-name
+
+# Create a Pull Request on GitHub
+```
+
+### Common Commands
+
+| Task | Command |
+|------|---------|
+| Start databases | `docker compose up -d` |
+| Stop databases | `docker compose down` |
+| View database logs | `docker compose logs -f` |
+| Start backend | `uvicorn main:app --reload --port 8001` |
+| Start frontend | `npm run dev` |
+| Install Python package | `pip install package-name` |
+| Install npm package | `npm install package-name` |
+| Run seed data | `./seed-data.sh` (Linux) or `seed-data.bat` (Windows) |
+
+### Tech Stack Reference
+
+| Layer | Technology | Documentation |
+|-------|------------|---------------|
+| Backend | FastAPI | https://fastapi.tiangolo.com/ |
+| Backend ORM | SQLAlchemy | https://www.sqlalchemy.org/ |
+| Backend Validation | Pydantic | https://docs.pydantic.dev/ |
+| Frontend | Vue 3 | https://vuejs.org/ |
+| Frontend UI | Element Plus | https://element-plus.org/ |
+| Frontend HTTP | Axios | https://axios-http.com/ |
+| Database | MongoDB | https://www.mongodb.com/docs/ |
+| Database | MySQL | https://dev.mysql.com/doc/ |
