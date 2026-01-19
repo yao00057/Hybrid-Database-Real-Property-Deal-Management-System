@@ -1,22 +1,13 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
-import type {
-  User, UserCreate, UserListResponse,
-  Property, PropertyCreate, PropertyUpdate, PropertyListResponse,
-  Deal, DealCreate, DealListResponse,
-  Transaction, TransactionCreate, TransactionListResponse,
-  TrustAccount, TrustAccountCreate
-} from '../types'
 
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 10000,
+  baseURL: 'http://localhost:8001/api',
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// Request interceptor
+// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -25,134 +16,83 @@ api.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error)
-)
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response.data,
   (error) => {
-    const message = error.response?.data?.detail || 'An error occurred'
-    ElMessage.error(message)
     return Promise.reject(error)
   }
 )
 
-// User API
-export const userApi = {
-  getAll: (page = 1, pageSize = 10, role?: string): Promise<UserListResponse> =>
-    api.get('/users', { params: { page, page_size: pageSize, role } }),
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
-  getById: (id: string): Promise<User> =>
-    api.get(`/users/${id}`),
+// Auth API
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password }),
 
-  create: (data: UserCreate): Promise<User> =>
-    api.post('/users', data),
+  register: (data: any) =>
+    api.post('/auth/register', data),
 
-  update: (id: string, data: Partial<UserCreate>): Promise<User> =>
-    api.put(`/users/${id}`, data),
+  me: () =>
+    api.get('/auth/me'),
 
-  delete: (id: string): Promise<void> =>
-    api.delete(`/users/${id}`),
-
-  getByRole: (role: string): Promise<User[]> =>
-    api.get(`/users/role/${role}`)
+  refresh: () =>
+    api.post('/auth/refresh')
 }
 
-// Property API
-export const propertyApi = {
-  getAll: (params: {
-    page?: number
-    page_size?: number
-    type?: string
-    status?: string
-    min_price?: number
-    max_price?: number
-    city?: string
-  } = {}): Promise<PropertyListResponse> =>
-    api.get('/properties', { params }),
-
-  getActive: (): Promise<Property[]> =>
-    api.get('/properties/active'),
-
-  getById: (id: string): Promise<Property> =>
-    api.get(`/properties/${id}`),
-
-  create: (data: PropertyCreate): Promise<Property> =>
-    api.post('/properties', data),
-
-  update: (id: string, data: PropertyUpdate): Promise<Property> =>
-    api.put(`/properties/${id}`, data),
-
-  delete: (id: string): Promise<void> =>
-    api.delete(`/properties/${id}`)
+// Users API
+export const usersApi = {
+  getAll: (params?: any) => api.get('/users', { params }),
+  getById: (id: string) => api.get(`/users/${id}`),
+  create: (data: any) => api.post('/users', data),
+  update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  delete: (id: string) => api.delete(`/users/${id}`)
 }
 
-// Deal API
-export const dealApi = {
-  getAll: (params: {
-    page?: number
-    page_size?: number
-    status?: string
-    property_id?: string
-  } = {}): Promise<DealListResponse> =>
-    api.get('/deals', { params }),
-
-  getById: (id: string): Promise<Deal> =>
-    api.get(`/deals/${id}`),
-
-  create: (data: DealCreate): Promise<Deal> =>
-    api.post('/deals', data),
-
-  update: (id: string, data: { offer_price?: number; closing_date?: string; notes?: string }): Promise<Deal> =>
-    api.put(`/deals/${id}`, data),
-
-  updateStatus: (id: string, status: string, note?: string): Promise<Deal> =>
-    api.patch(`/deals/${id}/status`, { status, note }),
-
-  addCondition: (id: string, condition: { type: string; description?: string; deadline?: string }): Promise<Deal> =>
-    api.post(`/deals/${id}/conditions`, condition),
-
-  updateCondition: (dealId: string, conditionId: string, update: { status: string; description?: string }): Promise<Deal> =>
-    api.patch(`/deals/${dealId}/conditions/${conditionId}`, update),
-
-  delete: (id: string): Promise<void> =>
-    api.delete(`/deals/${id}`)
+// Properties API
+export const propertiesApi = {
+  getAll: (params?: any) => api.get('/properties', { params }),
+  getById: (id: string) => api.get(`/properties/${id}`),
+  create: (data: any) => api.post('/properties', data),
+  update: (id: string, data: any) => api.put(`/properties/${id}`, data),
+  delete: (id: string) => api.delete(`/properties/${id}`)
 }
 
-// Transaction API
-export const transactionApi = {
-  getAll: (params: {
-    page?: number
-    page_size?: number
-    deal_id?: string
-    type?: string
-  } = {}): Promise<TransactionListResponse> =>
-    api.get('/transactions', { params }),
-
-  getById: (id: number): Promise<Transaction> =>
-    api.get(`/transactions/${id}`),
-
-  getByDeal: (dealId: string): Promise<Transaction[]> =>
-    api.get(`/deals/${dealId}/transactions`),
-
-  create: (data: TransactionCreate): Promise<Transaction> =>
-    api.post('/transactions', data)
+// Deals API
+export const dealsApi = {
+  getAll: (params?: any) => api.get('/deals', { params }),
+  getById: (id: string) => api.get(`/deals/${id}`),
+  create: (data: any) => api.post('/deals', data),
+  update: (id: string, data: any) => api.put(`/deals/${id}`, data),
+  delete: (id: string) => api.delete(`/deals/${id}`)
 }
 
-// Trust Account API
-export const trustAccountApi = {
-  getAll: (): Promise<{ accounts: TrustAccount[]; total: number }> =>
-    api.get('/accounts'),
+// Transactions API
+export const transactionsApi = {
+  getAll: (params?: any) => api.get('/transactions', { params }),
+  getById: (id: number) => api.get(`/transactions/${id}`),
+  create: (data: any) => api.post('/transactions', data),
+  complete: (id: number) => api.post(`/transactions/${id}/complete`),
+  getTrustAccounts: () => api.get('/transactions/trust-accounts/list'),
+  createTrustAccount: (data: any) => api.post('/transactions/trust-accounts', data),
+  getAuditLogs: (params?: any) => api.get('/transactions/audit-logs/list', { params })
+}
 
-  getById: (id: number): Promise<TrustAccount> =>
-    api.get(`/accounts/${id}`),
-
-  create: (data: TrustAccountCreate): Promise<TrustAccount> =>
-    api.post('/accounts', data),
-
-  update: (id: number, data: { holder_name?: string; status?: string }): Promise<TrustAccount> =>
-    api.put(`/accounts/${id}`, data)
+// Dashboard API
+export const dashboardApi = {
+  getStats: () => api.get('/dashboard/stats'),
+  getPropertyStats: () => api.get('/dashboard/properties'),
+  getDealStats: () => api.get('/dashboard/deals'),
+  getTransactionStats: () => api.get('/dashboard/transactions')
 }
 
 export default api

@@ -1,6 +1,6 @@
 <template>
   <el-container class="app-container">
-    <el-header>
+    <el-header v-if="isAuthenticated">
       <div class="header-content">
         <div class="logo">
           <el-icon :size="24"><OfficeBuilding /></el-icon>
@@ -12,11 +12,11 @@
           router
           class="header-menu"
         >
-          <el-menu-item index="/">
-            <el-icon><HomeFilled /></el-icon>
-            <span>Home</span>
+          <el-menu-item index="/dashboard">
+            <el-icon><DataLine /></el-icon>
+            <span>Dashboard</span>
           </el-menu-item>
-          <el-menu-item index="/users">
+          <el-menu-item v-if="canManageUsers" index="/users">
             <el-icon><User /></el-icon>
             <span>Users</span>
           </el-menu-item>
@@ -33,24 +33,91 @@
             <span>Transactions</span>
           </el-menu-item>
         </el-menu>
+        <div class="user-section">
+          <span class="user-name">{{ userName }} ({{ formatRole(userRole) }})</span>
+          <el-button type="danger" size="small" @click="handleLogout">Logout</el-button>
+        </div>
       </div>
     </el-header>
     <el-main>
       <router-view />
     </el-main>
-    <el-footer>
+    <el-footer v-if="isAuthenticated">
       <span>Real Property Deal Management System - CST8276 Project</span>
     </el-footer>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { HomeFilled, OfficeBuilding, Document, Money, User } from '@element-plus/icons-vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { HomeFilled, OfficeBuilding, Document, Money, User, DataLine } from '@element-plus/icons-vue'
 
 const route = useRoute()
+const router = useRouter()
+
+const isAuthenticated = ref(false)
+const userName = ref('')
+const userRole = ref('')
+
 const activeIndex = computed(() => route.path)
+
+const canManageUsers = computed(() => {
+  return ['buyer_agent', 'seller_agent', 'buyer_lawyer', 'seller_lawyer'].includes(userRole.value)
+})
+
+const formatRole = (role: string) => {
+  const roleMap: Record<string, string> = {
+    buyer: 'Buyer',
+    seller: 'Seller',
+    buyer_agent: 'Buyer Agent',
+    seller_agent: 'Seller Agent',
+    buyer_lawyer: 'Buyer Lawyer',
+    seller_lawyer: 'Seller Lawyer'
+  }
+  return roleMap[role] || role
+}
+
+const checkAuth = () => {
+  const token = localStorage.getItem('token')
+  const user = localStorage.getItem('user')
+
+  if (token && user) {
+    isAuthenticated.value = true
+    try {
+      const userData = JSON.parse(user)
+      userName.value = userData.profile?.name || userData.email
+      userRole.value = userData.role || ''
+    } catch {
+      userName.value = ''
+      userRole.value = ''
+    }
+  } else {
+    isAuthenticated.value = false
+    userName.value = ''
+    userRole.value = ''
+  }
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  isAuthenticated.value = false
+  userName.value = ''
+  userRole.value = ''
+  ElMessage.success('Logged out successfully')
+  router.push('/login')
+}
+
+// Check auth on route change
+watch(() => route.path, () => {
+  checkAuth()
+}, { immediate: true })
+
+onMounted(() => {
+  checkAuth()
+})
 </script>
 
 <style>
@@ -60,8 +127,8 @@ const activeIndex = computed(() => route.path)
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif;
+html, body, #app {
+  height: 100%;
 }
 
 .app-container {
@@ -69,8 +136,8 @@ body {
 }
 
 .el-header {
-  background-color: #409eff;
-  color: white;
+  background-color: #fff;
+  border-bottom: 1px solid #e4e7ed;
   padding: 0 20px;
 }
 
@@ -86,34 +153,36 @@ body {
   gap: 10px;
   font-size: 18px;
   font-weight: bold;
+  color: #409EFF;
   margin-right: 40px;
 }
 
 .header-menu {
-  background-color: transparent;
-  border-bottom: none;
   flex: 1;
+  border-bottom: none !important;
 }
 
-.header-menu .el-menu-item {
-  color: rgba(255, 255, 255, 0.8);
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-.header-menu .el-menu-item:hover,
-.header-menu .el-menu-item.is-active {
-  color: white;
-  background-color: rgba(255, 255, 255, 0.1);
+.user-name {
+  color: #606266;
+  font-size: 14px;
 }
 
 .el-main {
   background-color: #f5f7fa;
-  min-height: calc(100vh - 120px);
+  padding: 20px;
 }
 
 .el-footer {
-  background-color: #545c64;
-  color: white;
+  background-color: #fff;
+  border-top: 1px solid #e4e7ed;
   text-align: center;
   line-height: 60px;
+  color: #909399;
 }
 </style>
