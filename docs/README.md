@@ -23,10 +23,16 @@
 | Phase | Status | Description |
 |-------|--------|-------------|
 | Phase 1: Foundation | ✅ Complete | Docker, Backend skeleton, Frontend skeleton |
-| Phase 2: Core Features | 🔄 In Progress | User, Property, Deal, Transaction CRUD |
+| Phase 2: Core Features | ✅ Complete | User, Property, Deal, Transaction CRUD |
 | Phase 3: Polish | ⏳ Pending | Auth, Dashboard, Testing |
 
 **Last Updated:** January 2026
+
+### Implemented Features
+- **User Management**: 6 role types (buyer, seller, agents, lawyers) with role-specific fields
+- **Property Management**: Residential & commercial listings with filtering
+- **Deal Management**: Status workflow with participant snapshots
+- **Financial Transactions**: MySQL-backed with trust accounts and audit logs
 
 ---
 
