@@ -1,102 +1,77 @@
 <template>
-  <div class="transactions-container">
-    <el-row :gutter="20">
-      <el-col :span="16">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>Transactions</span>
-              <el-button type="primary" @click="openAddDialog">
-                <el-icon><Plus /></el-icon>
-                Record Transaction
-              </el-button>
-            </div>
+  <div class="transactions">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>Financial Transactions</span>
+          <el-button type="primary" @click="showCreateDialog = true">Create Transaction</el-button>
+        </div>
+      </template>
+
+      <el-table :data="transactions" stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="deal_id" label="Deal ID" width="220" />
+        <el-table-column prop="transaction_type" label="Type">
+          <template #default="{ row }">
+            <el-tag>{{ row.transaction_type }}</el-tag>
           </template>
+        </el-table-column>
+        <el-table-column prop="amount" label="Amount">
+          <template #default="{ row }">
+            ${{ row.amount?.toLocaleString() }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="from_party" label="From" />
+        <el-table-column prop="to_party" label="To" />
+        <el-table-column prop="status" label="Status">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'completed' ? 'success' : row.status === 'failed' ? 'danger' : 'warning'">
+              {{ row.status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="Actions" width="150">
+          <template #default="{ row }">
+            <el-button size="small" type="success" @click="completeTransaction(row.id)"
+                       :disabled="row.status !== 'pending'">Complete</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
-          <el-row :gutter="20" class="filter-row">
-            <el-col :span="8">
-              <el-input v-model="filterDealId" placeholder="Filter by Deal ID" clearable @change="loadTransactions" />
-            </el-col>
-            <el-col :span="6">
-              <el-select v-model="filterType" placeholder="Type" clearable @change="loadTransactions">
-                <el-option label="Deposit" value="deposit" />
-                <el-option label="Payment" value="payment" />
-                <el-option label="Refund" value="refund" />
-                <el-option label="Commission" value="commission" />
-              </el-select>
-            </el-col>
-          </el-row>
-
-          <el-table :data="transactions" stripe v-loading="loading" style="width: 100%">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="deal_id" label="Deal ID" width="120">
-              <template #default="{ row }">
-                {{ row.deal_id.substring(0, 8) }}...
-              </template>
-            </el-table-column>
-            <el-table-column prop="amount" label="Amount" width="130">
-              <template #default="{ row }">
-                <span :class="row.transaction_type === 'refund' ? 'text-danger' : 'text-success'">
-                  ${{ row.amount.toLocaleString() }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="transaction_type" label="Type" width="120">
-              <template #default="{ row }">
-                <el-tag :type="getTypeTagType(row.transaction_type)" size="small">
-                  {{ row.transaction_type }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="Status" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getStatusTagType(row.status)" size="small">{{ row.status }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="description" label="Description" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="created_at" label="Date" width="160">
-              <template #default="{ row }">
-                {{ new Date(row.created_at).toLocaleString() }}
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="total"
-            layout="prev, pager, next, total"
-            @current-change="loadTransactions"
-            class="pagination"
-          />
-        </el-card>
-      </el-col>
-
-      <el-col :span="8">
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="12">
         <el-card>
           <template #header>
             <div class="card-header">
               <span>Trust Accounts</span>
-              <el-button size="small" type="primary" @click="openAccountDialog">
-                <el-icon><Plus /></el-icon>
-                Add
-              </el-button>
+              <el-button size="small" type="primary" @click="showTrustDialog = true">Add Account</el-button>
             </div>
           </template>
-
-          <el-table :data="accounts" size="small" v-loading="accountsLoading">
-            <el-table-column prop="account_number" label="Account #" width="100" />
-            <el-table-column prop="holder_name" label="Holder" min-width="100" />
-            <el-table-column prop="balance" label="Balance" width="110">
+          <el-table :data="trustAccounts" stripe>
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column prop="account_name" label="Account Name" />
+            <el-table-column prop="account_holder" label="Holder" />
+            <el-table-column prop="balance" label="Balance">
               <template #default="{ row }">
-                ${{ row.balance.toLocaleString() }}
+                ${{ row.balance?.toLocaleString() }}
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="Status" width="80">
+          </el-table>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <template #header>
+            <span>Recent Audit Logs</span>
+          </template>
+          <el-table :data="auditLogs" stripe size="small">
+            <el-table-column prop="table_name" label="Table" width="100" />
+            <el-table-column prop="action" label="Action" width="80" />
+            <el-table-column prop="performed_by" label="By" />
+            <el-table-column prop="performed_at" label="Time">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
-                  {{ row.status }}
-                </el-tag>
+                {{ new Date(row.performed_at).toLocaleString() }}
               </template>
             </el-table-column>
           </el-table>
@@ -104,262 +79,155 @@
       </el-col>
     </el-row>
 
-    <!-- Add Transaction Dialog -->
-    <el-dialog v-model="addDialogVisible" title="Record Transaction" width="500">
-      <el-form :model="transactionForm" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="Deal ID" prop="deal_id">
-          <el-input v-model="transactionForm.deal_id" placeholder="MongoDB ObjectId" />
+    <el-dialog v-model="showCreateDialog" title="Create Transaction" width="500px">
+      <el-form :model="form" label-width="120px">
+        <el-form-item label="Deal ID">
+          <el-input v-model="form.deal_id" />
         </el-form-item>
-        <el-form-item label="Amount" prop="amount">
-          <el-input-number v-model="transactionForm.amount" :min="0.01" :step="100" :precision="2" style="width: 200px" />
-        </el-form-item>
-        <el-form-item label="Type" prop="transaction_type">
-          <el-select v-model="transactionForm.transaction_type" style="width: 100%">
+        <el-form-item label="Type">
+          <el-select v-model="form.transaction_type">
             <el-option label="Deposit" value="deposit" />
-            <el-option label="Payment" value="payment" />
-            <el-option label="Refund" value="refund" />
             <el-option label="Commission" value="commission" />
+            <el-option label="Legal Fee" value="legal_fee" />
+            <el-option label="Tax" value="tax" />
             <el-option label="Adjustment" value="adjustment" />
+            <el-option label="Disbursement" value="disbursement" />
           </el-select>
         </el-form-item>
-        <el-form-item label="From Account">
-          <el-select v-model="transactionForm.from_account" placeholder="Select account" clearable style="width: 100%">
-            <el-option v-for="acc in accounts" :key="acc.id" :label="`${acc.account_number} - ${acc.holder_name}`" :value="acc.account_number" />
-          </el-select>
+        <el-form-item label="Amount">
+          <el-input-number v-model="form.amount" :min="0" :step="100" />
         </el-form-item>
-        <el-form-item label="To Account">
-          <el-select v-model="transactionForm.to_account" placeholder="Select account" clearable style="width: 100%">
-            <el-option v-for="acc in accounts" :key="acc.id" :label="`${acc.account_number} - ${acc.holder_name}`" :value="acc.account_number" />
-          </el-select>
+        <el-form-item label="From Party">
+          <el-input v-model="form.from_party" />
+        </el-form-item>
+        <el-form-item label="To Party">
+          <el-input v-model="form.to_party" />
         </el-form-item>
         <el-form-item label="Description">
-          <el-input v-model="transactionForm.description" type="textarea" rows="2" />
+          <el-input v-model="form.description" type="textarea" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="addDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="createTransaction" :loading="saving">Save</el-button>
+        <el-button @click="showCreateDialog = false">Cancel</el-button>
+        <el-button type="primary" @click="saveTransaction">Create</el-button>
       </template>
     </el-dialog>
 
-    <!-- Add Account Dialog -->
-    <el-dialog v-model="accountDialogVisible" title="Create Trust Account" width="400">
-      <el-form :model="accountForm" :rules="accountRules" ref="accountFormRef" label-width="110px">
-        <el-form-item label="Account #" prop="account_number">
-          <el-input v-model="accountForm.account_number" />
+    <el-dialog v-model="showTrustDialog" title="Create Trust Account" width="400px">
+      <el-form :model="trustForm" label-width="120px">
+        <el-form-item label="Account Name">
+          <el-input v-model="trustForm.account_name" />
         </el-form-item>
-        <el-form-item label="Holder Name" prop="holder_name">
-          <el-input v-model="accountForm.holder_name" />
+        <el-form-item label="Holder">
+          <el-input v-model="trustForm.account_holder" />
         </el-form-item>
         <el-form-item label="Initial Balance">
-          <el-input-number v-model="accountForm.initial_balance" :min="0" :step="1000" :precision="2" style="width: 100%" />
+          <el-input-number v-model="trustForm.initial_balance" :min="0" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="accountDialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="createAccount" :loading="saving">Create</el-button>
+        <el-button @click="showTrustDialog = false">Cancel</el-button>
+        <el-button type="primary" @click="saveTrustAccount">Create</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import { transactionApi, trustAccountApi } from '../api/index'
-import type { Transaction, TrustAccount } from '../types'
+import { ref, onMounted } from "vue"
+import { ElMessage } from "element-plus"
+import { transactionsApi } from "../api"
+import type { Transaction, TransactionCreate, TrustAccount, AuditLog } from "../types"
 
 const transactions = ref<Transaction[]>([])
-const accounts = ref<TrustAccount[]>([])
+const trustAccounts = ref<TrustAccount[]>([])
+const auditLogs = ref<AuditLog[]>([])
 const loading = ref(false)
-const accountsLoading = ref(false)
-const saving = ref(false)
-const addDialogVisible = ref(false)
-const accountDialogVisible = ref(false)
-const currentPage = ref(1)
-const pageSize = 10
-const total = ref(0)
-const filterDealId = ref('')
-const filterType = ref('')
-const formRef = ref<FormInstance>()
-const accountFormRef = ref<FormInstance>()
+const showCreateDialog = ref(false)
+const showTrustDialog = ref(false)
 
-const transactionForm = reactive({
-  deal_id: '',
+const form = ref<TransactionCreate>({
+  deal_id: "",
+  transaction_type: "deposit",
   amount: 0,
-  transaction_type: 'deposit',
-  from_account: '',
-  to_account: '',
-  description: ''
+  from_party: "",
+  to_party: "",
+  description: ""
 })
 
-const accountForm = reactive({
-  account_number: '',
-  holder_name: '',
+const trustForm = ref({
+  account_name: "",
+  account_holder: "",
   initial_balance: 0
 })
 
-const rules: FormRules = {
-  deal_id: [{ required: true, message: 'Deal ID is required', trigger: 'blur' }],
-  amount: [{ required: true, type: 'number', min: 0.01, message: 'Valid amount required', trigger: 'blur' }],
-  transaction_type: [{ required: true, message: 'Type is required', trigger: 'change' }]
-}
-
-const accountRules: FormRules = {
-  account_number: [{ required: true, min: 5, message: 'Min 5 characters', trigger: 'blur' }],
-  holder_name: [{ required: true, message: 'Holder name is required', trigger: 'blur' }]
-}
-
-const loadTransactions = async () => {
+const loadData = async () => {
   loading.value = true
   try {
-    const params: any = { page: currentPage.value, page_size: pageSize }
-    if (filterDealId.value) params.deal_id = filterDealId.value
-    if (filterType.value) params.type = filterType.value
-    const response = await transactionApi.getAll(params)
-    transactions.value = response.transactions
-    total.value = response.total
-  } catch (error) {
-    console.error('Failed to load transactions:', error)
+    const [txRes, trustRes, logsRes] = await Promise.all([
+      transactionsApi.getAll(),
+      transactionsApi.getTrustAccounts(),
+      transactionsApi.getAuditLogs({ limit: 10 })
+    ])
+    transactions.value = txRes.data
+    trustAccounts.value = trustRes.data
+    auditLogs.value = logsRes.data
+  } catch {
+    ElMessage.error("Failed to load data")
   } finally {
     loading.value = false
   }
 }
 
-const loadAccounts = async () => {
-  accountsLoading.value = true
+const saveTransaction = async () => {
   try {
-    const response = await trustAccountApi.getAll()
-    accounts.value = response.accounts
-  } catch (error) {
-    console.error('Failed to load accounts:', error)
-  } finally {
-    accountsLoading.value = false
+    await transactionsApi.create(form.value)
+    ElMessage.success("Transaction created")
+    showCreateDialog.value = false
+    resetForm()
+    loadData()
+  } catch {
+    ElMessage.error("Failed to create transaction")
   }
 }
 
-const openAddDialog = () => {
-  transactionForm.deal_id = ''
-  transactionForm.amount = 0
-  transactionForm.transaction_type = 'deposit'
-  transactionForm.from_account = ''
-  transactionForm.to_account = ''
-  transactionForm.description = ''
-  addDialogVisible.value = true
-}
-
-const openAccountDialog = () => {
-  accountForm.account_number = ''
-  accountForm.holder_name = ''
-  accountForm.initial_balance = 0
-  accountDialogVisible.value = true
-}
-
-const createTransaction = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    saving.value = true
-    try {
-      await transactionApi.create({
-        deal_id: transactionForm.deal_id,
-        amount: transactionForm.amount,
-        transaction_type: transactionForm.transaction_type as any,
-        from_account: transactionForm.from_account || undefined,
-        to_account: transactionForm.to_account || undefined,
-        description: transactionForm.description || undefined
-      })
-      ElMessage.success('Transaction recorded successfully')
-      addDialogVisible.value = false
-      loadTransactions()
-    } catch (error) {
-      console.error('Failed to create transaction:', error)
-    } finally {
-      saving.value = false
-    }
-  })
-}
-
-const createAccount = async () => {
-  if (!accountFormRef.value) return
-  await accountFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    saving.value = true
-    try {
-      await trustAccountApi.create({
-        account_number: accountForm.account_number,
-        holder_name: accountForm.holder_name,
-        initial_balance: accountForm.initial_balance
-      })
-      ElMessage.success('Account created successfully')
-      accountDialogVisible.value = false
-      loadAccounts()
-    } catch (error) {
-      console.error('Failed to create account:', error)
-    } finally {
-      saving.value = false
-    }
-  })
-}
-
-const getTypeTagType = (type: string) => {
-  const types: Record<string, string> = {
-    deposit: 'success',
-    payment: 'primary',
-    refund: 'danger',
-    commission: 'warning',
-    adjustment: 'info'
+const completeTransaction = async (id: number) => {
+  try {
+    await transactionsApi.complete(id)
+    ElMessage.success("Transaction completed")
+    loadData()
+  } catch {
+    ElMessage.error("Failed to complete transaction")
   }
-  return types[type] || 'default'
 }
 
-const getStatusTagType = (status: string) => {
-  const types: Record<string, string> = {
-    pending: 'warning',
-    completed: 'success',
-    failed: 'danger',
-    reversed: 'info'
+const saveTrustAccount = async () => {
+  try {
+    await transactionsApi.createTrustAccount(trustForm.value)
+    ElMessage.success("Trust account created")
+    showTrustDialog.value = false
+    trustForm.value = { account_name: "", account_holder: "", initial_balance: 0 }
+    loadData()
+  } catch {
+    ElMessage.error("Failed to create trust account")
   }
-  return types[status] || 'default'
 }
 
-onMounted(() => {
-  loadTransactions()
-  loadAccounts()
-})
+const resetForm = () => {
+  form.value = {
+    deal_id: "",
+    transaction_type: "deposit",
+    amount: 0,
+    from_party: "",
+    to_party: "",
+    description: ""
+  }
+}
+
+onMounted(() => loadData())
 </script>
 
 <style scoped>
-.transactions-container {
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.filter-row {
-  margin-bottom: 20px;
-}
-
-.pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
-}
-
-.text-success {
-  color: #67c23a;
-  font-weight: bold;
-}
-
-.text-danger {
-  color: #f56c6c;
-  font-weight: bold;
-}
+.transactions { padding: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>

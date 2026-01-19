@@ -24,7 +24,7 @@
 |-------|--------|-------------|
 | Phase 1: Foundation | ✅ Complete | Docker, Backend skeleton, Frontend skeleton |
 | Phase 2: Core Features | ✅ Complete | User, Property, Deal, Transaction CRUD |
-| Phase 3: Polish | ⏳ Pending | Auth, Dashboard, Testing |
+| Phase 3: Polish | ✅ Complete | Auth, Dashboard, Role-based UI, One-key Deployment |
 
 **Last Updated:** January 2026
 
@@ -33,6 +33,9 @@
 - **Property Management**: Residential & commercial listings with filtering
 - **Deal Management**: Status workflow with participant snapshots
 - **Financial Transactions**: MySQL-backed with trust accounts and audit logs
+- **JWT Authentication**: Secure login/register with role-based access control
+- **Dashboard Analytics**: Real-time statistics with charts
+- **One-Key Deployment**: Single script to deploy on fresh Ubuntu server
 
 ---
 
@@ -71,29 +74,32 @@ Platform:    Ubuntu 22.04 LTS
 
 ---
 
-## Quick Start (After Setup)
+## Quick Start - One Key Deployment
+
+For a **fresh Ubuntu 22.04 server**, simply run:
 
 ```bash
-# 1. Start database services
+# Clone and deploy
+git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git ~/real-estate-system
 cd ~/real-estate-system
-docker compose up -d
-
-# 2. Start backend (in one terminal)
-cd ~/real-estate-system
-source venv/bin/activate
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# 3. Start frontend (in another terminal)
-cd ~/real-estate-system/frontend
-npm run dev
-
-# 4. Access the application
-# Frontend:     http://localhost:5173
-# API Docs:     http://localhost:8000/docs
-# phpMyAdmin:   http://localhost:8080
-# Mongo Express: http://localhost:8081
+chmod +x deploy.sh
+./deploy.sh
 ```
+
+The script will automatically:
+1. Install Docker, Node.js, Python
+2. Start database containers
+3. Setup backend and frontend
+4. Display access URLs
+
+### Access URLs (replace with your server IP)
+
+| Service | URL |
+|---------|-----|
+| Frontend App | http://YOUR_IP:5173 |
+| API Documentation | http://YOUR_IP:8001/docs |
+| phpMyAdmin | http://YOUR_IP:8080 |
+| Mongo Express | http://YOUR_IP:8081 |
 
 ---
 
