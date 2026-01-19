@@ -153,6 +153,26 @@ After login, you can access different features based on your role:
 
 ### Basic Workflow
 
+### Creating a Deal (Agents/Lawyers)
+
+The Deal creation form features smart dropdown selectors:
+
+1. **Select Property**: Choose from active property listings (shows address and price)
+2. **Select Participants**: 
+   - Buyer (from registered buyers)
+   - Seller (from registered sellers)
+   - Buyer Agent (optional)
+   - Seller Agent (optional)
+   - Buyer Lawyer (optional)
+   - Seller Lawyer (optional)
+3. **Enter Deal Details**:
+   - Offer Price
+   - Closing Date (optional)
+   - Notes
+
+The system automatically validates all selections and creates participant snapshots for the deal record.
+
+
 1. **Seller** lists a property
 2. **Buyer** browses properties
 3. **Agent** creates a deal linking buyer, seller, and property
