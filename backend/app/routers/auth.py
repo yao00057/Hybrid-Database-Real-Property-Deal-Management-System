@@ -2,6 +2,7 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 from app.core.security import (
     Token, verify_password, get_password_hash,
@@ -35,9 +36,54 @@ class UserInfo(BaseModel):
     role: str
 
 
-@router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Login with email and password"""
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserInfo
+
+
+@router.post("/login", response_model=LoginResponse)
+async def login(request: LoginRequest):
+    """Login with email and password (JSON)"""
+    service = UserService()
+    user = await service.get_user_by_email(request.email)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not verify_password(request.password, user.get("password_hash", "")):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={
+            "sub": str(user["_id"]),
+            "email": user["email"],
+            "role": user["role"]
+        },
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
+
+    user_info = UserInfo(
+        id=str(user["_id"]),
+        email=user["email"],
+        name=user.get("profile", {}).get("name", ""),
+        role=user["role"]
+    )
+
+    return LoginResponse(access_token=access_token, user=user_info)
+
+
+@router.post("/token", response_model=Token)
+async def login_for_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Login with form data for OAuth2 compatibility"""
     service = UserService()
     user = await service.get_user_by_email(form_data.username)
 

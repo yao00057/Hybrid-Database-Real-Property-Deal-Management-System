@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
+from bson import ObjectId
 
 from app.schemas.user import (
     UserCreate, UserUpdate, UserResponse, UserListResponse, UserRole
@@ -7,6 +8,17 @@ from app.schemas.user import (
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+
+def validate_object_id(id_value: str, field_name: str):
+    """Validate that a string is a valid MongoDB ObjectId"""
+    if not id_value:
+        return
+    if not ObjectId.is_valid(id_value):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid {field_name}: '{id_value}' is not a valid ObjectId. It must be a 24-character hex string."
+        )
 
 
 @router.post("", response_model=UserResponse, status_code=201)
@@ -37,9 +49,19 @@ async def list_users(
     )
 
 
+@router.get("/all", response_model=list[UserResponse])
+async def get_all_users():
+    """Get all users for selection dropdowns"""
+    service = UserService()
+    users, _ = await service.get_users(1, 1000, None)
+    return users
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str):
     """Get user by ID"""
+    validate_object_id(user_id, "user_id")
+    
     service = UserService()
     user = await service.get_user(user_id)
     if not user:
@@ -50,6 +72,8 @@ async def get_user(user_id: str):
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(user_id: str, user_data: UserUpdate):
     """Update user"""
+    validate_object_id(user_id, "user_id")
+    
     service = UserService()
     try:
         user = await service.update_user(user_id, user_data)
@@ -63,6 +87,8 @@ async def update_user(user_id: str, user_data: UserUpdate):
 @router.delete("/{user_id}", status_code=204)
 async def delete_user(user_id: str):
     """Delete user"""
+    validate_object_id(user_id, "user_id")
+    
     service = UserService()
     deleted = await service.delete_user(user_id)
     if not deleted:

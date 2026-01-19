@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.database.mongodb import connect_mongodb, close_mongodb
 from app.database.mysql import connect_mysql, close_mysql
-from app.routers import users, properties, deals, transactions
+from app.routers import users, properties, deals, transactions, auth, dashboard
 
 
 @asynccontextmanager
@@ -26,20 +26,22 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
+# Configure CORS - allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(properties.router)
 app.include_router(deals.router)
 app.include_router(transactions.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/")
