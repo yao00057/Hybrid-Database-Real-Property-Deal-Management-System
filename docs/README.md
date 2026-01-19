@@ -35,7 +35,7 @@
 - **Financial Transactions**: MySQL-backed with trust accounts and audit logs
 - **JWT Authentication**: Secure login/register with role-based access control
 - **Dashboard Analytics**: Real-time statistics with charts
-- **One-Key Deployment**: Single script to deploy on fresh Ubuntu server
+- **One-Key Deployment**: Single script to deploy on fresh Ubuntu or Windows
 
 ---
 
@@ -69,37 +69,45 @@ Frontend:    Vue 3 + Vite + Element Plus + TypeScript
 Backend:     FastAPI + Pydantic + SQLAlchemy + Motor
 Databases:   MongoDB 7.0 + MySQL 8.0
 DevOps:      Docker + Docker Compose
-Platform:    Ubuntu 22.04 LTS
+Platform:    Ubuntu 22.04 LTS / Windows 10/11
 ```
 
 ---
 
 ## Quick Start - One Key Deployment
 
-For a **fresh Ubuntu 22.04 server**, simply run:
+### Ubuntu 22.04 LTS
 
 ```bash
-# Clone and deploy
 git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git ~/real-estate-system
 cd ~/real-estate-system
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-The script will automatically:
-1. Install Docker, Node.js, Python
+### Windows 10/11 (PowerShell as Administrator)
+
+```powershell
+# Download and run
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System/main/deploy-windows.ps1" -OutFile "$env:TEMP\deploy-windows.ps1"
+Set-ExecutionPolicy Bypass -Scope Process -Force
+& "$env:TEMP\deploy-windows.ps1"
+```
+
+The scripts will automatically:
+1. Install Docker, Node.js, Python (if needed)
 2. Start database containers
 3. Setup backend and frontend
 4. Display access URLs
 
-### Access URLs (replace with your server IP)
+### Access URLs
 
 | Service | URL |
 |---------|-----|
-| Frontend App | http://YOUR_IP:5173 |
-| API Documentation | http://YOUR_IP:8001/docs |
-| phpMyAdmin | http://YOUR_IP:8080 |
-| Mongo Express | http://YOUR_IP:8081 |
+| Frontend App | http://localhost:5173 |
+| API Documentation | http://localhost:8001/docs |
+| phpMyAdmin | http://localhost:8080 |
+| Mongo Express | http://localhost:8081 |
 
 ---
 
@@ -111,6 +119,7 @@ The script will automatically:
 - Deal lifecycle management
 - Financial transaction tracking
 - RESTful API with auto-documentation
+- Cross-platform deployment (Ubuntu & Windows)
 
 ### Out of Scope
 - Payment gateway integration
@@ -126,6 +135,7 @@ The script will automatically:
 3. **Modern Frontend** - Vue 3 Composition API
 4. **Containerization** - Docker for development
 5. **API Design** - RESTful best practices
+6. **Cross-Platform Deployment** - Ubuntu and Windows scripts
 
 ---
 

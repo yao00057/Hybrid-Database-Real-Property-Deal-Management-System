@@ -20,17 +20,13 @@ A hybrid database solution using **MongoDB** and **MySQL** for managing real est
 | Databases | MongoDB 7.0 + MySQL 8.0 |
 | Cache | Redis 7 |
 | DevOps | Docker + Docker Compose |
-| Platform | Ubuntu 22.04 LTS |
+| Platform | Ubuntu 22.04 LTS / Windows 10/11 |
+
+---
 
 ## Quick Start - One Key Deployment
 
-### Prerequisites
-
-- Ubuntu 22.04 LTS (fresh installation)
-- User with sudo privileges
-- Internet connection
-
-### Deploy
+### Option 1: Ubuntu 22.04 LTS
 
 ```bash
 # 1. Clone the repository
@@ -42,33 +38,111 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-The script will:
-1. Install Docker, Node.js 20.x, Python 3
-2. Start database containers (MongoDB, MySQL, Redis)
-3. Setup Python virtual environment and install dependencies
-4. Install npm packages and start frontend
-5. Display access URLs when complete
+### Option 2: Windows 10/11
 
-### Access URLs (after deployment)
+**Prerequisites:**
+- Windows 10/11 (64-bit)
+- PowerShell running as Administrator
+- Virtualization enabled in BIOS (for Docker)
+
+**Deploy:**
+
+```powershell
+# 1. Download the script (run in PowerShell as Administrator)
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System/main/deploy-windows.ps1" -OutFile "$env:TEMP\deploy-windows.ps1"
+
+# 2. Run the deployment script
+Set-ExecutionPolicy Bypass -Scope Process -Force
+& "$env:TEMP\deploy-windows.ps1"
+```
+
+**Or manually:**
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git $env:USERPROFILE\real-estate-system
+
+# 2. Run the deployment script (as Administrator)
+cd $env:USERPROFILE\real-estate-system
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\deploy-windows.ps1
+```
+
+**Note:** If Docker Desktop is not installed, the script will install it and ask you to restart your computer. After restart, run the script again.
+
+---
+
+## What the Deployment Scripts Do
+
+| Step | Ubuntu (deploy.sh) | Windows (deploy-windows.ps1) |
+|------|-------------------|------------------------------|
+| 1 | Update system packages | Install Chocolatey |
+| 2 | Install Docker | Install Docker Desktop |
+| 3 | Install Node.js 20.x | Install Node.js LTS |
+| 4 | Install Python 3 | Install Python 3 |
+| 5 | Clone repository | Clone repository |
+| 6 | Start Docker containers | Start Docker containers |
+| 7 | Setup Python venv & deps | Setup Python venv & deps |
+| 8 | Start services | Create start/stop scripts |
+
+---
+
+## Access URLs (after deployment)
 
 | Service | URL |
 |---------|-----|
-| Frontend App | http://YOUR_SERVER_IP:5173 |
-| Backend API | http://YOUR_SERVER_IP:8001 |
-| API Documentation | http://YOUR_SERVER_IP:8001/docs |
-| phpMyAdmin | http://YOUR_SERVER_IP:8080 |
-| Mongo Express | http://YOUR_SERVER_IP:8081 |
+| Frontend App | http://localhost:5173 |
+| Backend API | http://localhost:8001 |
+| API Documentation | http://localhost:8001/docs |
+| phpMyAdmin | http://localhost:8080 |
+| Mongo Express | http://localhost:8081 |
+
+**Note:** On Ubuntu, replace `localhost` with your server IP for remote access.
+
+---
+
+## Windows Quick Commands
+
+After deployment on Windows, use these scripts in the project folder:
+
+| Script | Description |
+|--------|-------------|
+| `start-all.bat` | Start all services (databases + backend + frontend) |
+| `stop-all.bat` | Stop all services |
+| `start-backend.bat` | Start only the backend API |
+| `start-frontend.bat` | Start only the frontend |
+
+---
+
+## Ubuntu Quick Commands
+
+```bash
+# View logs
+tail -f ~/backend.log
+tail -f ~/frontend.log
+
+# Restart services
+pkill -f uvicorn && cd ~/real-estate-system/backend && source ../venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
+pkill -f vite && cd ~/real-estate-system/frontend && npm run dev &
+
+# Stop all
+docker compose down
+pkill -f uvicorn
+pkill -f vite
+```
+
+---
 
 ## Project Structure
 
 ```
 real-estate-system/
-├── deploy.sh                 # One-key deployment script
+├── deploy.sh                 # Ubuntu deployment script
+├── deploy-windows.ps1        # Windows deployment script
 ├── docker-compose.yml        # Database services
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── requirements.txt     # Python dependencies
-│   ├── .env                 # Environment variables
 │   └── app/
 │       ├── core/            # Config, security, types
 │       ├── database/        # MongoDB & MySQL connections
@@ -85,6 +159,8 @@ real-estate-system/
         ├── types.ts         # TypeScript interfaces
         └── views/           # Vue components
 ```
+
+---
 
 ## API Endpoints
 
@@ -141,16 +217,20 @@ real-estate-system/
 | GET | /api/dashboard/deals | Deal statistics |
 | GET | /api/dashboard/transactions | Transaction statistics |
 
+---
+
 ## Role-Based Access
 
 | Role | Users | Properties | Deals | Transactions |
 |------|-------|------------|-------|--------------|
-| Buyer | ❌ | Browse | My Deals | ✅ |
-| Seller | ❌ | My Properties | My Deals | ✅ |
-| Buyer Agent | ✅ | ✅ | ✅ | ✅ |
-| Seller Agent | ✅ | ✅ | ✅ | ✅ |
-| Buyer Lawyer | ✅ | ✅ | ✅ | ✅ |
-| Seller Lawyer | ✅ | ✅ | ✅ | ✅ |
+| Buyer | - | Browse | My Deals | View |
+| Seller | - | My Properties | My Deals | View |
+| Buyer Agent | Full | Full | Full | Full |
+| Seller Agent | Full | Full | Full | Full |
+| Buyer Lawyer | Full | Full | Full | Full |
+| Seller Lawyer | Full | Full | Full | Full |
+
+---
 
 ## Database Schema
 
@@ -164,40 +244,50 @@ real-estate-system/
 - **trust_accounts**: Trust account balances
 - **audit_logs**: Immutable audit trail
 
-## Development
+---
 
-### Manual Setup
+## Default Credentials
 
+| Service | Username | Password |
+|---------|----------|----------|
+| MySQL | real_estate_user | real_estate_pass |
+| MySQL (root) | root | rootpassword |
+| MongoDB | (no auth) | (development mode) |
+| phpMyAdmin | real_estate_user | real_estate_pass |
+
+---
+
+## Troubleshooting
+
+### Docker not starting (Windows)
+1. Ensure virtualization is enabled in BIOS
+2. Open Docker Desktop and wait for it to fully start
+3. Check the whale icon in system tray is stable (not animating)
+
+### Port already in use
 ```bash
-# Backend
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-
-# Frontend
-cd frontend
-npm install
-npm run dev
+# Ubuntu
+sudo lsof -i :8001  # Find process using port
+sudo kill -9 <PID>  # Kill the process
 ```
 
-### Useful Commands
+```powershell
+# Windows (PowerShell as Admin)
+netstat -ano | findstr :8001
+taskkill /PID <PID> /F
+```
 
+### Database connection failed
 ```bash
-# View logs
-tail -f ~/backend.log
-tail -f ~/frontend.log
+# Check if containers are running
+docker ps
 
-# Restart services
-pkill -f uvicorn && cd ~/real-estate-system/backend && ~/real-estate-system/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
-pkill -f vite && cd ~/real-estate-system/frontend && npm run dev &
-
-# Stop all
+# Restart containers
 docker compose down
-pkill -f uvicorn
-pkill -f vite
+docker compose up -d
 ```
+
+---
 
 ## License
 
