@@ -9,13 +9,17 @@ param(
     [string]$InstallPath = "$env:USERPROFILE\Desktop\real-estate-system"
 )
 
+# Disable all confirmation prompts
 $ErrorActionPreference = "Continue"
+$ConfirmPreference = "None"
+$ProgressPreference = "SilentlyContinue"
+
+# Set environment variable to auto-confirm Chocolatey
+$env:ChocolateyToolsLocation = "C:\tools"
 
 # Function to refresh environment variables without restarting PowerShell
 function Update-Environment {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
-    # Also refresh other important variables
     foreach($level in "Machine","User") {
         [Environment]::GetEnvironmentVariables($level).GetEnumerator() | ForEach-Object {
             if($_.Name -ne 'Path') {
@@ -60,8 +64,13 @@ if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
     Update-Environment
+
+    # Configure Chocolatey to not prompt
+    choco feature enable -n allowGlobalConfirmation 2>$null
     Write-Success "Chocolatey installed successfully"
 } else {
+    # Ensure Chocolatey doesn't prompt
+    choco feature enable -n allowGlobalConfirmation 2>$null
     Write-Success "Chocolatey already installed"
 }
 
@@ -72,7 +81,6 @@ Write-Step "2/8" "Checking Docker Desktop..."
 
 $dockerRunning = $false
 
-# Check if docker command exists and is running
 if (Get-Command docker -ErrorAction SilentlyContinue) {
     try {
         $dockerVersion = docker version --format '{{.Server.Version}}' 2>$null
@@ -86,7 +94,6 @@ if (Get-Command docker -ErrorAction SilentlyContinue) {
 }
 
 if (-not $dockerRunning) {
-    # Check if Docker Desktop is installed but not running
     $dockerDesktopPath = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
     if (Test-Path $dockerDesktopPath) {
         Write-Info "Docker Desktop is installed but not running."
@@ -98,7 +105,6 @@ if (-not $dockerRunning) {
         Write-Host "  Waiting for Docker Desktop to start..." -ForegroundColor Yellow
         Write-Host "================================================================" -ForegroundColor Yellow
 
-        # Wait for Docker to be ready
         $retries = 0
         $maxRetries = 60
         while ($retries -lt $maxRetries) {
@@ -120,9 +126,8 @@ if (-not $dockerRunning) {
             exit 1
         }
     } else {
-        # Docker Desktop not installed
-        Write-Info "Installing Docker Desktop..."
-        choco install docker-desktop -y
+        Write-Info "Installing Docker Desktop (this may take a few minutes)..."
+        choco install docker-desktop -y --no-progress 2>$null
 
         Write-Host ""
         Write-Host "================================================================" -ForegroundColor Red
@@ -150,10 +155,9 @@ Update-Environment
 
 if (!(Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Info "Installing Git..."
-    choco install git -y
+    choco install git -y --no-progress 2>$null
     Update-Environment
 
-    # Verify installation
     if (Get-Command git -ErrorAction SilentlyContinue) {
         Write-Success "Git installed successfully"
     } else {
@@ -173,10 +177,9 @@ Update-Environment
 
 if (!(Get-Command node -ErrorAction SilentlyContinue)) {
     Write-Info "Installing Node.js LTS..."
-    choco install nodejs-lts -y
+    choco install nodejs-lts -y --no-progress 2>$null
     Update-Environment
 
-    # Verify installation
     if (Get-Command node -ErrorAction SilentlyContinue) {
         $nodeVersion = node --version
         Write-Success "Node.js $nodeVersion installed successfully"
@@ -221,14 +224,12 @@ foreach ($pyPath in $pythonPaths) {
 
 if (-not $pythonCmd) {
     Write-Info "Installing Python 3..."
-    choco install python --version=3.12.0 -y
+    choco install python --version=3.12.0 -y --no-progress 2>$null
     Update-Environment
 
-    # Wait a moment for installation to complete
     Start-Sleep -Seconds 3
     Update-Environment
 
-    # Try to find Python again
     foreach ($pyPath in $pythonPaths) {
         try {
             $version = & $pyPath --version 2>$null
@@ -256,7 +257,6 @@ if (-not $pythonCmd) {
     Write-Success "$pythonVersion already installed"
 }
 
-# Store the Python command for later use
 $global:PythonExe = $pythonCmd
 
 #-------------------------------------------------------------------------------
@@ -284,10 +284,8 @@ Write-Step "7/8" "Starting Docker services (MongoDB, MySQL, Redis)..."
 
 Set-Location $InstallPath
 
-# Stop any existing containers (ignore errors)
 docker compose down 2>$null
 
-# Start containers
 Write-Info "Starting containers..."
 docker compose up -d 2>$null
 
@@ -300,7 +298,6 @@ if ($LASTEXITCODE -ne 0) {
 Write-Info "Waiting for databases to initialize (15 seconds)..."
 Start-Sleep -Seconds 15
 
-# Setup MySQL user
 Write-Info "Configuring MySQL user..."
 $mysqlSetup = "CREATE DATABASE IF NOT EXISTS real_estate_financial; DROP USER IF EXISTS 'real_estate_user'@'%'; CREATE USER 'real_estate_user'@'%' IDENTIFIED WITH mysql_native_password BY 'real_estate_pass'; GRANT ALL PRIVILEGES ON real_estate_financial.* TO 'real_estate_user'@'%'; FLUSH PRIVILEGES;"
 
@@ -322,18 +319,14 @@ Write-Step "8/8" "Setting up Backend and Frontend..."
 Write-Info "Setting up Python backend..."
 Set-Location "$InstallPath\backend"
 
-# Create virtual environment
 if (!(Test-Path "venv")) {
     Write-Info "Creating Python virtual environment..."
     & $global:PythonExe -m venv venv
 }
 
-# Get pip path
 $pipExe = "$InstallPath\backend\venv\Scripts\pip.exe"
-$pythonVenvExe = "$InstallPath\backend\venv\Scripts\python.exe"
 
-# Install dependencies
-Write-Info "Installing Python dependencies..."
+Write-Info "Installing Python dependencies (this may take a minute)..."
 & $pipExe install --upgrade pip -q 2>$null
 & $pipExe install -r requirements.txt -q 2>$null
 
@@ -344,7 +337,8 @@ Write-Info "Setting up Vue.js frontend..."
 Set-Location "$InstallPath\frontend"
 
 Write-Info "Installing npm packages (this may take a few minutes)..."
-npm install 2>$null
+# Use --yes and --legacy-peer-deps to avoid prompts
+npm install --yes --legacy-peer-deps 2>$null
 
 # Update API URL to localhost
 $apiFile = "$InstallPath\frontend\src\api\index.ts"
@@ -359,7 +353,6 @@ Write-Success "Frontend dependencies installed"
 #-------------------------------------------------------------------------------
 Write-Info "Creating start scripts..."
 
-# Create backend start script
 $backendScript = @"
 @echo off
 echo Starting Backend API...
@@ -369,7 +362,6 @@ uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 "@
 Set-Content -Path "$InstallPath\start-backend.bat" -Value $backendScript
 
-# Create frontend start script
 $frontendScript = @"
 @echo off
 echo Starting Frontend...
@@ -378,7 +370,6 @@ npm run dev -- --host --port 5173
 "@
 Set-Content -Path "$InstallPath\start-frontend.bat" -Value $frontendScript
 
-# Create combined start script
 $startAllScript = @"
 @echo off
 echo ================================================================
@@ -418,13 +409,18 @@ echo   API Documentation:   http://localhost:8001/docs
 echo   phpMyAdmin:          http://localhost:8080
 echo   Mongo Express:       http://localhost:8081
 echo.
+echo   HOW TO USE:
+echo   1. Click "Register here" to create an account
+echo   2. Choose a role (Buyer, Seller, Agent, or Lawyer)
+echo   3. Login with your email and password
+echo   4. Explore Dashboard, Properties, Deals, Transactions
+echo.
 echo   Press any key to close this window (services will keep running)
 echo.
 pause > nul
 "@
 Set-Content -Path "$InstallPath\start-all.bat" -Value $startAllScript
 
-# Create stop script
 $stopScript = @"
 @echo off
 echo Stopping all services...
@@ -440,9 +436,6 @@ Set-Content -Path "$InstallPath\stop-all.bat" -Value $stopScript
 
 Write-Success "Start scripts created"
 
-#-------------------------------------------------------------------------------
-# Return to install directory
-#-------------------------------------------------------------------------------
 Set-Location $InstallPath
 
 #-------------------------------------------------------------------------------
@@ -469,7 +462,14 @@ Write-Host "| phpMyAdmin          | http://localhost:8080              |" -Foreg
 Write-Host "| Mongo Express       | http://localhost:8081              |" -ForegroundColor White
 Write-Host "----------------------------------------------------------------"
 Write-Host ""
-Write-Host "Default Credentials:" -ForegroundColor Yellow
+Write-Host "How to Use:" -ForegroundColor Yellow
+Write-Host "  1. Run start-all.bat (on Desktop in real-estate-system folder)"
+Write-Host "  2. Open http://localhost:5173 in your browser"
+Write-Host "  3. Click 'Register here' to create an account"
+Write-Host "  4. Choose a role: Buyer, Seller, Agent, or Lawyer"
+Write-Host "  5. Login and explore the system!"
+Write-Host ""
+Write-Host "Default Database Credentials:" -ForegroundColor Yellow
 Write-Host "----------------------------------------------------------------"
 Write-Host "| MySQL:    user: real_estate_user / pass: real_estate_pass   |" -ForegroundColor White
 Write-Host "| MongoDB:  No authentication (development mode)              |" -ForegroundColor White
