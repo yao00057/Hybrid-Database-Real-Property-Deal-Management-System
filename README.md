@@ -106,6 +106,61 @@ C:\Users\<YourUsername>\Desktop\real-estate-system\
 
 ---
 
+## How to Use the Application
+
+### Step 1: Register an Account
+
+1. Open http://localhost:5173 in your browser
+2. Click **"Register here"** on the login page
+3. Fill in your details:
+   - Full Name
+   - Email
+   - Password (min 6 characters)
+   - Select your role (Buyer, Seller, Agent, or Lawyer)
+   - Phone number
+4. Click **Register**
+
+### Step 2: Login
+
+1. Enter your email and password
+2. Click **Login**
+3. You'll be redirected to the Dashboard
+
+### Step 3: Explore Features
+
+After login, you can access different features based on your role:
+
+| Feature | Buyer | Seller | Agent/Lawyer |
+|---------|-------|--------|--------------|
+| Dashboard | ✅ | ✅ | ✅ |
+| View Properties | ✅ | ✅ | ✅ |
+| Create Properties | ❌ | ✅ | ✅ |
+| View Deals | My Deals | My Deals | All Deals |
+| Create Deals | ❌ | ❌ | ✅ |
+| Manage Users | ❌ | ❌ | ✅ |
+| Transactions | View | View | Full Access |
+
+### Available User Roles
+
+| Role | Description |
+|------|-------------|
+| **Buyer** | Can browse properties and view their deals |
+| **Seller** | Can list properties and view their deals |
+| **Buyer Agent** | Full access - represents buyers in deals |
+| **Seller Agent** | Full access - represents sellers in deals |
+| **Buyer Lawyer** | Full access - handles legal for buyers |
+| **Seller Lawyer** | Full access - handles legal for sellers |
+
+### Basic Workflow
+
+1. **Seller** lists a property
+2. **Buyer** browses properties
+3. **Agent** creates a deal linking buyer, seller, and property
+4. **Lawyer** reviews and manages deal documents
+5. **Transactions** are recorded for deposits, commissions, legal fees
+
+---
+
 ## Windows Quick Commands
 
 After deployment on Windows, find these scripts on your **Desktop** in the `real-estate-system` folder:
