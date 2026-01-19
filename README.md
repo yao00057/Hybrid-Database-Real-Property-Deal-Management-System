@@ -266,10 +266,43 @@ real-estate-system/
 
 ## Troubleshooting
 
-### Docker not starting (Windows)
-1. Ensure virtualization is enabled in BIOS
+### Windows: Script fails at Python installation
+If the script says "Python not found" after installation:
+1. **Close PowerShell completely**
+2. **Reopen PowerShell as Administrator**
+3. **Run the script again** - it will detect the installed Python
+
+```powershell
+# Re-run the deployment script
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System/main/deploy-windows.ps1" -OutFile "$env:TEMP\deploy-windows.ps1"
+& "$env:TEMP\deploy-windows.ps1"
+```
+
+### Windows: Docker Desktop not installed
+If Docker Desktop is not installed:
+1. The script will install Docker Desktop automatically
+2. **You must restart your computer** after installation
+3. After restart, **launch Docker Desktop** from Start Menu
+4. Wait for Docker to fully start (whale icon in system tray stops animating)
+5. Run the deployment script again
+
+### Windows: Docker not starting
+1. Ensure **virtualization is enabled in BIOS/UEFI**
+   - Restart computer → Enter BIOS (F2, F10, or DEL key)
+   - Find "Virtualization Technology" or "VT-x" → Enable it
 2. Open Docker Desktop and wait for it to fully start
 3. Check the whale icon in system tray is stable (not animating)
+
+### Windows: Script fails mid-way
+If the script fails after some steps completed:
+```powershell
+# Delete the incomplete installation and start fresh
+Remove-Item -Recurse -Force $env:USERPROFILE\Desktop\real-estate-system
+
+# Re-run the script
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System/main/deploy-windows.ps1" -OutFile "$env:TEMP\deploy-windows.ps1"
+& "$env:TEMP\deploy-windows.ps1"
+```
 
 ### Port already in use
 ```bash
@@ -293,6 +326,12 @@ docker ps
 docker compose down
 docker compose up -d
 ```
+
+### Windows: npm or node not found
+If npm/node commands fail after installation:
+1. Close PowerShell
+2. Reopen PowerShell as Administrator
+3. Try the command again
 
 ---
 
