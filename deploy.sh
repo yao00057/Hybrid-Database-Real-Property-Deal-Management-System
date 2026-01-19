@@ -42,6 +42,7 @@ if ! command -v docker &> /dev/null; then
     sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-compose-plugin
     sudo usermod -aG docker $USER
     echo -e "${GREEN}   Docker installed successfully${NC}"
+    echo -e "${YELLOW}   NOTE: You may need to log out and back in for Docker permissions${NC}"
 else
     echo -e "${GREEN}   Docker already installed${NC}"
 fi
@@ -71,7 +72,11 @@ echo -e "${GREEN}   Python $(python3 --version) installed${NC}"
 echo -e "${YELLOW}[5/8] Setting up project directory...${NC}"
 PROJECT_DIR="$HOME/real-estate-system"
 
-if [ ! -d "$PROJECT_DIR" ]; then
+if [ -d "$PROJECT_DIR" ]; then
+    echo -e "${YELLOW}   Project directory exists, pulling latest changes...${NC}"
+    cd "$PROJECT_DIR"
+    git pull origin main 2>/dev/null || true
+else
     echo -e "${YELLOW}   Cloning repository...${NC}"
     git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git "$PROJECT_DIR"
 fi
@@ -83,7 +88,11 @@ echo -e "${GREEN}   Project directory: $PROJECT_DIR${NC}"
 # Step 6: Start Docker services
 #-------------------------------------------------------------------------------
 echo -e "${YELLOW}[6/8] Starting Docker services (MongoDB, MySQL, Redis)...${NC}"
-# Need to use sudo for first run if user hasnt logged out/in after docker group add
+
+# Stop existing containers first
+docker compose down 2>/dev/null || sudo docker compose down 2>/dev/null || true
+
+# Start containers - use sudo for first run if user hasn't logged out/in after docker group add
 if groups $USER | grep -q docker; then
     docker compose up -d 2>/dev/null || sudo docker compose up -d
 else
@@ -91,7 +100,7 @@ else
 fi
 
 # Wait for databases to be ready
-echo -e "   Waiting for databases to initialize..."
+echo -e "   Waiting for databases to initialize (15 seconds)..."
 sleep 15
 
 # Setup MySQL user
@@ -146,8 +155,8 @@ sed -i "s|allow_origins=\[.*\]|allow_origins=[\"http://localhost:5173\", \"http:
 pkill -f "vite.*5173" 2>/dev/null || true
 sleep 2
 
-# Start frontend
-nohup npm run dev -- --port 5173 > "$HOME/frontend.log" 2>&1 &
+# Start frontend with --host to allow external access
+nohup npm run dev -- --host --port 5173 > "$HOME/frontend.log" 2>&1 &
 
 echo -e "${GREEN}   Frontend started on port 5173${NC}"
 
@@ -177,9 +186,18 @@ echo "| MySQL:    user: real_estate_user / pass: real_estate_pass   |"
 echo "| MongoDB:  No authentication (development mode)              |"
 echo "----------------------------------------------------------------"
 echo ""
+echo -e "${BLUE}How to Use:${NC}"
+echo "  1. Open http://$SERVER_IP:5173 in your browser"
+echo "  2. Click 'Register here' to create an account"
+echo "  3. Choose a role: Buyer, Seller, Agent, or Lawyer"
+echo "  4. Login with your email and password"
+echo "  5. Explore the Dashboard, Properties, Deals, and Transactions"
+echo ""
 echo -e "${BLUE}Useful Commands:${NC}"
 echo "  View backend logs:   tail -f ~/backend.log"
 echo "  View frontend logs:  tail -f ~/frontend.log"
+echo "  Restart backend:     pkill -f uvicorn && cd ~/real-estate-system/backend && ~/real-estate-system/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 --reload &"
+echo "  Restart frontend:    pkill -f vite && cd ~/real-estate-system/frontend && npm run dev -- --host --port 5173 &"
 echo "  Stop all services:   docker compose down && pkill -f uvicorn && pkill -f vite"
 echo ""
 echo -e "${GREEN}Happy coding!${NC}"
