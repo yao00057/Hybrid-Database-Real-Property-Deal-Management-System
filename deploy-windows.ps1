@@ -275,6 +275,16 @@ if (Test-Path $InstallPath) {
     git clone https://github.com/yao00057/Hybrid-Database-Real-Property-Deal-Management-System.git $InstallPath
     Set-Location $InstallPath
 }
+
+# Copy .env.example to .env if .env doesn't exist
+$envFile = "$InstallPath\backend\.env"
+$envExample = "$InstallPath\backend\.env.example"
+if (!(Test-Path $envFile) -and (Test-Path $envExample)) {
+    Write-Info "Creating backend .env file from template..."
+    Copy-Item $envExample $envFile
+    Write-Success "Backend .env file created"
+}
+
 Write-Success "Project directory: $InstallPath"
 
 #-------------------------------------------------------------------------------
@@ -298,14 +308,12 @@ if ($LASTEXITCODE -ne 0) {
 Write-Info "Waiting for databases to initialize (15 seconds)..."
 Start-Sleep -Seconds 15
 
-Write-Info "Configuring MySQL user..."
-$mysqlSetup = "CREATE DATABASE IF NOT EXISTS real_estate_financial; DROP USER IF EXISTS 'real_estate_user'@'%'; CREATE USER 'real_estate_user'@'%' IDENTIFIED WITH mysql_native_password BY 'real_estate_pass'; GRANT ALL PRIVILEGES ON real_estate_financial.* TO 'real_estate_user'@'%'; FLUSH PRIVILEGES;"
-
+Write-Info "Configuring MySQL..."
 try {
-    docker exec re_mysql mysql -u root -prootpassword -e $mysqlSetup 2>$null
-    Write-Success "MySQL user configured"
+    docker exec re_mysql mysql -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS real_estate_financial;" 2>$null
+    Write-Success "MySQL configured"
 } catch {
-    Write-Info "MySQL user may already exist, continuing..."
+    Write-Info "MySQL may already be configured, continuing..."
 }
 
 Write-Success "Docker services started"
@@ -415,6 +423,9 @@ echo   2. Choose a role (Buyer, Seller, Agent, or Lawyer)
 echo   3. Login with your email and password
 echo   4. Explore Dashboard, Properties, Deals, Transactions
 echo.
+echo   SEED TEST DATA (create test accounts for all roles):
+echo   Run: seed-data.bat
+echo.
 echo   Press any key to close this window (services will keep running)
 echo.
 pause > nul
@@ -433,6 +444,15 @@ echo All services stopped.
 pause
 "@
 Set-Content -Path "$InstallPath\stop-all.bat" -Value $stopScript
+
+# Create seed-data.bat wrapper
+$seedScript = @"
+@echo off
+echo Running seed data script...
+powershell -ExecutionPolicy Bypass -File "$InstallPath\seed-data.ps1"
+pause
+"@
+Set-Content -Path "$InstallPath\seed-data.bat" -Value $seedScript
 
 Write-Success "Start scripts created"
 
@@ -469,9 +489,13 @@ Write-Host "  3. Click 'Register here' to create an account"
 Write-Host "  4. Choose a role: Buyer, Seller, Agent, or Lawyer"
 Write-Host "  5. Login and explore the system!"
 Write-Host ""
+Write-Host "Seed Test Data:" -ForegroundColor Yellow
+Write-Host "  Run: seed-data.bat"
+Write-Host "  Creates 12 test accounts (2 per role) with password: test123"
+Write-Host ""
 Write-Host "Default Database Credentials:" -ForegroundColor Yellow
 Write-Host "----------------------------------------------------------------"
-Write-Host "| MySQL:    user: real_estate_user / pass: real_estate_pass   |" -ForegroundColor White
+Write-Host "| MySQL:    user: reuser / pass: repassword                   |" -ForegroundColor White
 Write-Host "| MongoDB:  No authentication (development mode)              |" -ForegroundColor White
 Write-Host "----------------------------------------------------------------"
 Write-Host ""

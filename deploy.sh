@@ -82,6 +82,13 @@ else
 fi
 
 cd "$PROJECT_DIR"
+
+# Copy .env.example to .env if .env doesn't exist
+if [ ! -f "backend/.env" ]; then
+    echo -e "${YELLOW}   Creating backend .env file...${NC}"
+    cp backend/.env.example backend/.env
+fi
+
 echo -e "${GREEN}   Project directory: $PROJECT_DIR${NC}"
 
 #-------------------------------------------------------------------------------
@@ -103,9 +110,9 @@ fi
 echo -e "   Waiting for databases to initialize (15 seconds)..."
 sleep 15
 
-# Setup MySQL user
-echo -e "   Configuring MySQL user..."
-sudo docker exec re_mysql mysql -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS real_estate_financial; DROP USER IF EXISTS 'real_estate_user'@'%'; CREATE USER 'real_estate_user'@'%' IDENTIFIED WITH mysql_native_password BY 'real_estate_pass'; GRANT ALL PRIVILEGES ON real_estate_financial.* TO 'real_estate_user'@'%'; FLUSH PRIVILEGES;" 2>/dev/null || true
+# Setup MySQL financial database
+echo -e "   Configuring MySQL..."
+sudo docker exec re_mysql mysql -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS real_estate_financial;" 2>/dev/null || true
 
 echo -e "${GREEN}   Docker services started${NC}"
 
@@ -148,9 +155,6 @@ npm install --silent 2>/dev/null
 # Update API URL to use current server IP
 sed -i "s|baseURL:.*|baseURL: 'http://$SERVER_IP:8001/api',|g" src/api/index.ts
 
-# Update CORS in backend
-sed -i "s|allow_origins=\[.*\]|allow_origins=[\"http://localhost:5173\", \"http://127.0.0.1:5173\", \"http://$SERVER_IP:5173\"]|g" "$PROJECT_DIR/backend/main.py"
-
 # Stop existing frontend
 pkill -f "vite.*5173" 2>/dev/null || true
 sleep 2
@@ -182,8 +186,8 @@ echo "----------------------------------------------------------------"
 echo ""
 echo -e "${BLUE}Default Credentials:${NC}"
 echo "----------------------------------------------------------------"
-echo "| MySQL:    user: real_estate_user / pass: real_estate_pass   |"
-echo "| MongoDB:  No authentication (development mode)              |"
+echo "| MySQL:    user: reuser / pass: repassword                    |"
+echo "| MongoDB:  No authentication (development mode)               |"
 echo "----------------------------------------------------------------"
 echo ""
 echo -e "${BLUE}How to Use:${NC}"
@@ -192,6 +196,10 @@ echo "  2. Click 'Register here' to create an account"
 echo "  3. Choose a role: Buyer, Seller, Agent, or Lawyer"
 echo "  4. Login with your email and password"
 echo "  5. Explore the Dashboard, Properties, Deals, and Transactions"
+echo ""
+echo -e "${BLUE}Seed Test Data:${NC}"
+echo "  Run: ./seed-data.sh"
+echo "  This creates test users for all 6 roles (password: test123)"
 echo ""
 echo -e "${BLUE}Useful Commands:${NC}"
 echo "  View backend logs:   tail -f ~/backend.log"

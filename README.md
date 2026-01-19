@@ -417,3 +417,39 @@ Academic use only - CST8276 Database Course Project
 ## Author
 
 CST8276 Project Team
+
+---
+
+## Seed Test Data
+
+After deployment, you can quickly create test accounts for all 6 user roles:
+
+### Ubuntu/Linux
+```bash
+cd ~/real-estate-system
+./seed-data.sh
+```
+
+### Windows
+```
+Double-click seed-data.bat in the project folder
+```
+
+### Test Accounts Created
+
+| Role | Email | Password |
+|------|-------|----------|
+| Buyer | buyer1@test.com | test123 |
+| Buyer | buyer2@test.com | test123 |
+| Seller | seller1@test.com | test123 |
+| Seller | seller2@test.com | test123 |
+| Buyer Agent | buyeragent1@test.com | test123 |
+| Buyer Agent | buyeragent2@test.com | test123 |
+| Seller Agent | selleragent1@test.com | test123 |
+| Seller Agent | selleragent2@test.com | test123 |
+| Buyer Lawyer | buyerlawyer1@test.com | test123 |
+| Buyer Lawyer | buyerlawyer2@test.com | test123 |
+| Seller Lawyer | sellerlawyer1@test.com | test123 |
+| Seller Lawyer | sellerlawyer2@test.com | test123 |
+
+Use these accounts to quickly test the application without manually registering users.
