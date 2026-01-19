@@ -16,6 +16,10 @@
             <el-icon><HomeFilled /></el-icon>
             <span>Home</span>
           </el-menu-item>
+          <el-menu-item index="/users">
+            <el-icon><User /></el-icon>
+            <span>Users</span>
+          </el-menu-item>
           <el-menu-item index="/properties">
             <el-icon><OfficeBuilding /></el-icon>
             <span>Properties</span>
@@ -23,6 +27,10 @@
           <el-menu-item index="/deals">
             <el-icon><Document /></el-icon>
             <span>Deals</span>
+          </el-menu-item>
+          <el-menu-item index="/transactions">
+            <el-icon><Money /></el-icon>
+            <span>Transactions</span>
           </el-menu-item>
         </el-menu>
       </div>
@@ -39,7 +47,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, OfficeBuilding, Document } from '@element-plus/icons-vue'
+import { HomeFilled, OfficeBuilding, Document, Money, User } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeIndex = computed(() => route.path)
