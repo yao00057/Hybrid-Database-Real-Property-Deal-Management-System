@@ -294,9 +294,10 @@ Write-Step "7/8" "Starting Docker services (MongoDB, MySQL, Redis)..."
 
 Set-Location $InstallPath
 
-docker compose down 2>$null
+Write-Info "Stopping existing containers and removing volumes..."
+docker compose down -v 2>$null
 
-Write-Info "Starting containers..."
+Write-Info "Starting fresh containers..."
 docker compose up -d 2>$null
 
 if ($LASTEXITCODE -ne 0) {
@@ -305,16 +306,8 @@ if ($LASTEXITCODE -ne 0) {
     docker compose up -d
 }
 
-Write-Info "Waiting for databases to initialize (15 seconds)..."
-Start-Sleep -Seconds 15
-
-Write-Info "Configuring MySQL..."
-try {
-    docker exec re_mysql mysql -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS real_estate_financial;" 2>$null
-    Write-Success "MySQL configured"
-} catch {
-    Write-Info "MySQL may already be configured, continuing..."
-}
+Write-Info "Waiting for databases to initialize (20 seconds)..."
+Start-Sleep -Seconds 20
 
 Write-Success "Docker services started"
 

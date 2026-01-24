@@ -96,10 +96,12 @@ echo -e "${GREEN}   Project directory: $PROJECT_DIR${NC}"
 #-------------------------------------------------------------------------------
 echo -e "${YELLOW}[6/8] Starting Docker services (MongoDB, MySQL, Redis)...${NC}"
 
-# Stop existing containers first
-docker compose down 2>/dev/null || sudo docker compose down 2>/dev/null || true
+# Stop and remove existing containers and volumes for clean start
+echo -e "   Stopping existing containers..."
+docker compose down -v 2>/dev/null || sudo docker compose down -v 2>/dev/null || true
 
 # Start containers - use sudo for first run if user hasn't logged out/in after docker group add
+echo -e "   Starting new containers..."
 if groups $USER | grep -q docker; then
     docker compose up -d 2>/dev/null || sudo docker compose up -d
 else
@@ -107,12 +109,8 @@ else
 fi
 
 # Wait for databases to be ready
-echo -e "   Waiting for databases to initialize (15 seconds)..."
-sleep 15
-
-# Setup MySQL financial database
-echo -e "   Configuring MySQL..."
-sudo docker exec re_mysql mysql -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS real_estate_financial;" 2>/dev/null || true
+echo -e "   Waiting for databases to initialize (20 seconds)..."
+sleep 20
 
 echo -e "${GREEN}   Docker services started${NC}"
 

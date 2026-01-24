@@ -654,3 +654,53 @@ git push origin feature/your-feature-name
 | Frontend HTTP | Axios | https://axios-http.com/ |
 | Database | MongoDB | https://www.mongodb.com/docs/ |
 | Database | MySQL | https://dev.mysql.com/doc/ |
+
+### MySQL Connection Error (Access Denied)
+
+If you see "Access denied for user 'reuser'@'localhost'" error:
+
+**Solution 1: Clean Docker Restart**
+```bash
+# Ubuntu/Linux
+cd ~/real-estate-system
+docker compose down -v  # Remove volumes
+docker compose up -d    # Fresh start
+sleep 20                # Wait for initialization
+
+# Windows
+cd %USERPROFILE%\Desktop\real-estate-system
+docker compose down -v
+docker compose up -d
+timeout /t 20
+```
+
+**Solution 2: Verify .env File**
+```bash
+# Check backend/.env exists and matches these credentials
+cat backend/.env
+
+# Should contain:
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=reuser
+MYSQL_PASSWORD=repassword
+MYSQL_DATABASE=real_estate_financial
+```
+
+**Solution 3: Manual MySQL Setup (if above fails)**
+```bash
+# Connect to MySQL container
+docker exec -it re_mysql mysql -u root -prootpassword
+
+# Run these commands in MySQL prompt
+CREATE DATABASE IF NOT EXISTS real_estate_financial;
+DROP USER IF EXISTS 'reuser'@'%';
+CREATE USER 'reuser'@'%' IDENTIFIED WITH mysql_native_password BY 'repassword';
+GRANT ALL PRIVILEGES ON real_estate_financial.* TO 'reuser'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Restart backend
+# Linux: pkill -f uvicorn && cd ~/real-estate-system/backend && ~/real-estate-system/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
+# Windows: Close the Backend window and run start-backend.bat again
+```
