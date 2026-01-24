@@ -169,10 +169,13 @@ const loadData = async () => {
       transactionsApi.getTrustAccounts(),
       transactionsApi.getAuditLogs({ limit: 10 })
     ])
-    transactions.value = txRes.data
-    trustAccounts.value = trustRes.data
-    auditLogs.value = logsRes.data
-  } catch {
+
+    // Handle different response formats
+    transactions.value = txRes.data.transactions || (Array.isArray(txRes.data) ? txRes.data : [])
+    trustAccounts.value = trustRes.data.accounts || (Array.isArray(trustRes.data) ? trustRes.data : [])
+    auditLogs.value = Array.isArray(logsRes.data) ? logsRes.data : []
+  } catch (error) {
+    console.error('Failed to load data:', error)
     ElMessage.error("Failed to load data")
   } finally {
     loading.value = false

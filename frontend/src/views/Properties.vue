@@ -166,7 +166,7 @@
         </template>
 
         <el-form-item label="Description">
-          <el-input v-model="propertyForm.description" type="textarea" rows="3" />
+          <el-input v-model="propertyForm.description" type="textarea" :rows="3" />
         </el-form-item>
 
         <el-form-item label="Status" v-if="isEdit">
