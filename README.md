@@ -94,6 +94,47 @@ C:\Users\<YourUsername>\Desktop\real-estate-system\
 
 ## Access URLs (after deployment)
 
+---
+
+## Accessing from Host Machine (VM Deployment)
+
+If you deployed on a VM (like Ubuntu Server), access from your Windows/Mac host:
+
+### Step 1: Get VM IP Address
+```bash
+# On VM, run:
+hostname -I | awk '{print $1}'
+# Example output: 192.168.232.139
+```
+
+### Step 2: Access URLs
+
+Replace `VM_IP` with your VM's IP address:
+
+| Service | URL |
+|---------|-----|
+| Frontend App | http://VM_IP:5173 |
+| Backend API | http://VM_IP:8001 |
+| API Documentation | http://VM_IP:8001/docs |
+| phpMyAdmin | http://VM_IP:8080 |
+| Mongo Express | http://VM_IP:8081 |
+
+**Example:** If VM IP is 192.168.232.139, open http://192.168.232.139:5173
+
+### Step 3: Login with Test Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Buyer | buyer1@test.com | test123 |
+| Seller | seller1@test.com | test123 |
+| Buyer Agent | buyeragent1@test.com | test123 |
+| Seller Agent | selleragent1@test.com | test123 |
+| Buyer Lawyer | buyerlawyer1@test.com | test123 |
+| Seller Lawyer | sellerlawyer1@test.com | test123 |
+
+**Note:** The deploy.sh script automatically creates these test accounts after deployment.
+
+
 | Service | URL |
 |---------|-----|
 | Frontend App | http://localhost:5173 |

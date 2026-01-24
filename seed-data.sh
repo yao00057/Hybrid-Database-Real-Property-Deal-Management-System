@@ -59,7 +59,7 @@ create_user() {
     elif echo "$response" | grep -q "already registered"; then
         echo -e "${YELLOW}  ⚠ Already exists: $email${NC}"
     else
-        echo -e "${RED}  ✗ Failed: $email - $response${NC}"
+        echo -e "${RED}  ✗ Failed: $email${NC}"
     fi
 }
 

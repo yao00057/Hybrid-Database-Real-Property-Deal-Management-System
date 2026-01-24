@@ -492,6 +492,19 @@ Write-Host "| MySQL:    user: reuser / pass: repassword                   |" -Fo
 Write-Host "| MongoDB:  No authentication (development mode)              |" -ForegroundColor White
 Write-Host "----------------------------------------------------------------"
 Write-Host ""
+#-------------------------------------------------------------------------------
+# Create test accounts automatically
+#-------------------------------------------------------------------------------
+Write-Host ""
+Write-Host "Creating test accounts..." -ForegroundColor Yellow
+try {
+    & "$InstallPath\seed-data.ps1" -ErrorAction SilentlyContinue
+    Write-Success "Test accounts created (password: test123)"
+} catch {
+    Write-Info "Test accounts will be available after first start"
+}
+
+Write-Host ""
 Write-Host "Would you like to start the application now? (Y/N)" -ForegroundColor Yellow
 $response = Read-Host
 

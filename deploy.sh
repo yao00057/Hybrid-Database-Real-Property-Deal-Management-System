@@ -207,3 +207,11 @@ echo "  Restart frontend:    pkill -f vite && cd ~/real-estate-system/frontend &
 echo "  Stop all services:   docker compose down && pkill -f uvicorn && pkill -f vite"
 echo ""
 echo -e "${GREEN}Happy coding!${NC}"
+
+#-------------------------------------------------------------------------------
+# Create test accounts automatically
+#-------------------------------------------------------------------------------
+echo ""
+echo -e "${YELLOW}Creating test accounts...${NC}"
+bash seed-data.sh 2>/dev/null || echo "Seed data script will run in background"
+
