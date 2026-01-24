@@ -1,6 +1,8 @@
 <template>
   <div class="dashboard">
-    <h1>Dashboard</h1>
+    <div class="dashboard-header">
+      <h1>Dashboard</h1>
+    </div>
 
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
@@ -49,7 +51,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" style="margin-top: 20px;">
+    <el-row :gutter="20">
       <el-col :span="12">
         <el-card>
           <template #header>
@@ -167,14 +169,14 @@ const loadDashboard = async () => {
     ])
 
     stats.value = statsRes.data
-    
+
     // Handle properties response - could be array or object with properties field
     if (propsRes.data.properties) {
       recentProperties.value = propsRes.data.properties.slice(0, 5)
     } else if (Array.isArray(propsRes.data)) {
       recentProperties.value = propsRes.data.slice(0, 5)
     }
-    
+
     // Use recent_activity from stats
     if (stats.value.recent_activity) {
       recentActivity.value = stats.value.recent_activity.slice(0, 5)
@@ -189,20 +191,34 @@ onMounted(() => loadDashboard())
 
 <style scoped>
 .dashboard {
-  padding: 20px;
+  min-height: calc(100vh - 120px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 30px;
+}
+
+.dashboard-header {
+  margin-bottom: 30px;
 }
 
 .dashboard h1 {
-  margin-bottom: 20px;
-  color: #303133;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 600;
 }
 
 .stats-row {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
   height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
 }
 
 .stat-content {
@@ -210,6 +226,7 @@ onMounted(() => loadDashboard())
   align-items: center;
   gap: 20px;
   height: 100%;
+  padding: 10px;
 }
 
 .stat-info {
@@ -225,5 +242,15 @@ onMounted(() => loadDashboard())
 .stat-label {
   color: #909399;
   font-size: 14px;
+  margin-top: 5px;
+}
+
+:deep(.el-card) {
+  border-radius: 12px;
+}
+
+:deep(.el-card__header) {
+  background-color: #f8f9fa;
+  font-weight: 600;
 }
 </style>

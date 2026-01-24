@@ -175,7 +175,7 @@ html, body, #app {
 
 .el-main {
   background-color: #f5f7fa;
-  padding: 20px;
+  padding: 0;
 }
 
 .el-footer {
