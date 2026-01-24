@@ -8,7 +8,7 @@
           <div class="stat-content">
             <el-icon :size="40" color="#409EFF"><User /></el-icon>
             <div class="stat-info">
-              <div class="stat-number">{{ stats.users }}</div>
+              <div class="stat-number">{{ stats.total_users || 0 }}</div>
               <div class="stat-label">Total Users</div>
             </div>
           </div>
@@ -19,7 +19,7 @@
           <div class="stat-content">
             <el-icon :size="40" color="#67C23A"><OfficeBuilding /></el-icon>
             <div class="stat-info">
-              <div class="stat-number">{{ stats.properties }}</div>
+              <div class="stat-number">{{ stats.total_properties || 0 }}</div>
               <div class="stat-label">Properties</div>
             </div>
           </div>
@@ -30,7 +30,7 @@
           <div class="stat-content">
             <el-icon :size="40" color="#E6A23C"><Document /></el-icon>
             <div class="stat-info">
-              <div class="stat-number">{{ stats.deals }}</div>
+              <div class="stat-number">{{ stats.total_deals || 0 }}</div>
               <div class="stat-label">Active Deals</div>
             </div>
           </div>
@@ -41,7 +41,7 @@
           <div class="stat-content">
             <el-icon :size="40" color="#F56C6C"><Money /></el-icon>
             <div class="stat-info">
-              <div class="stat-number">${{ formatNumber(stats.transactions) }}</div>
+              <div class="stat-number">${{ formatNumber(stats.total_transaction_amount || 0) }}</div>
               <div class="stat-label">Transaction Value</div>
             </div>
           </div>
@@ -82,20 +82,24 @@
       <el-col :span="12">
         <el-card>
           <template #header>
-            <span>Recent Deals</span>
+            <span>Recent Activity</span>
           </template>
-          <el-table :data="recentDeals" stripe size="small">
-            <el-table-column prop="deal_name" label="Deal" />
-            <el-table-column prop="status" label="Status" width="120">
+          <el-table :data="recentActivity" stripe size="small">
+            <el-table-column prop="type" label="Type" width="80">
+              <template #default="{ row }">
+                <el-tag size="small">{{ row.type }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="Status" width="100">
               <template #default="{ row }">
                 <el-tag :type="getDealStatusType(row.status)" size="small">
                   {{ row.status }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deal_price" label="Price" width="120">
+            <el-table-column prop="amount" label="Amount" width="120">
               <template #default="{ row }">
-                ${{ row.deal_price?.toLocaleString() }}
+                ${{ row.amount?.toLocaleString() }}
               </template>
             </el-table-column>
           </el-table>
@@ -108,19 +112,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { User, OfficeBuilding, Document, Money } from '@element-plus/icons-vue'
-import { dashboardApi, propertiesApi, dealsApi } from '../api'
+import { dashboardApi, propertiesApi } from '../api'
 
 const stats = ref({
-  users: 0,
-  properties: 0,
-  deals: 0,
-  transactions: 0
+  total_users: 0,
+  total_properties: 0,
+  active_properties: 0,
+  total_deals: 0,
+  deals_by_status: {},
+  total_transactions: 0,
+  total_transaction_amount: 0,
+  recent_activity: []
 })
 
 const recentProperties = ref([])
-const recentDeals = ref([])
+const recentActivity = ref([])
 
-const formatNumber = (num: number) => {
+const formatNumber = (num: number | undefined | null) => {
+  if (!num || typeof num !== 'number') return '0'
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M'
   } else if (num >= 1000) {
@@ -152,15 +161,24 @@ const getDealStatusType = (status: string) => {
 
 const loadDashboard = async () => {
   try {
-    const [statsRes, propsRes, dealsRes] = await Promise.all([
+    const [statsRes, propsRes] = await Promise.all([
       dashboardApi.getStats(),
-      propertiesApi.getAll({ limit: 5 }),
-      dealsApi.getAll({ limit: 5 })
+      propertiesApi.getAll({ limit: 5 })
     ])
 
     stats.value = statsRes.data
-    recentProperties.value = propsRes.data.slice(0, 5)
-    recentDeals.value = dealsRes.data.slice(0, 5)
+    
+    // Handle properties response - could be array or object with properties field
+    if (propsRes.data.properties) {
+      recentProperties.value = propsRes.data.properties.slice(0, 5)
+    } else if (Array.isArray(propsRes.data)) {
+      recentProperties.value = propsRes.data.slice(0, 5)
+    }
+    
+    // Use recent_activity from stats
+    if (stats.value.recent_activity) {
+      recentActivity.value = stats.value.recent_activity.slice(0, 5)
+    }
   } catch (error) {
     console.error('Failed to load dashboard:', error)
   }

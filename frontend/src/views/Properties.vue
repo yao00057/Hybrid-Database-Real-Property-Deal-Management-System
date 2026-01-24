@@ -191,7 +191,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { propertyApi } from '../api/index'
+import { propertiesApi } from '../api/index'
 import type { Property } from '../types'
 
 const properties = ref<Property[]>([])
@@ -246,7 +246,7 @@ const loadProperties = async () => {
     if (filters.min_price) params.min_price = filters.min_price
     if (filters.max_price) params.max_price = filters.max_price
 
-    const response = await propertyApi.getAll(params)
+    const response = await propertiesApi.getAll(params)
     properties.value = response.properties
     total.value = response.total
   } catch (error) {
@@ -291,7 +291,7 @@ const saveProperty = async () => {
     saving.value = true
     try {
       if (isEdit.value) {
-        await propertyApi.update(editingId.value, {
+        await propertiesApi.update(editingId.value, {
           listing_price: propertyForm.listing_price,
           status: propertyForm.status as any,
           attributes: propertyForm.attributes,
@@ -299,7 +299,7 @@ const saveProperty = async () => {
         })
         ElMessage.success('Property updated successfully')
       } else {
-        await propertyApi.create({
+        await propertiesApi.create({
           type: propertyForm.type as any,
           address: propertyForm.address,
           listing_price: propertyForm.listing_price,
@@ -325,7 +325,7 @@ const confirmDelete = (property: Property) => {
     { type: 'warning' }
   ).then(async () => {
     try {
-      await propertyApi.delete(property._id)
+      await propertiesApi.delete(property._id)
       ElMessage.success('Property deleted')
       loadProperties()
     } catch (error) {

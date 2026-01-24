@@ -82,9 +82,9 @@ export const transactionsApi = {
   getById: (id: number) => api.get(`/transactions/${id}`),
   create: (data: any) => api.post('/transactions', data),
   complete: (id: number) => api.post(`/transactions/${id}/complete`),
-  getTrustAccounts: () => api.get('/transactions/trust-accounts/list'),
-  createTrustAccount: (data: any) => api.post('/transactions/trust-accounts', data),
-  getAuditLogs: (params?: any) => api.get('/transactions/audit-logs/list', { params })
+  getTrustAccounts: () => api.get('/accounts'),
+  createTrustAccount: (data: any) => api.post('/accounts', data),
+  getAuditLogs: (params?: any) => api.get('/audit-logs', { params })
 }
 
 // Dashboard API
