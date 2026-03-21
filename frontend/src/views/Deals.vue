@@ -55,9 +55,9 @@
           <el-select v-model="form.property_id" placeholder="Select a property" style="width: 100%" filterable>
             <el-option
               v-for="prop in properties"
-              :key="prop.id"
+              :key="prop._id"
               :label="formatPropertyLabel(prop)"
-              :value="prop.id"
+              :value="prop._id"
             />
           </el-select>
         </el-form-item>
@@ -68,9 +68,9 @@
           <el-select v-model="form.participants.buyer_id" placeholder="Select buyer" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in buyers"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -79,9 +79,9 @@
           <el-select v-model="form.participants.seller_id" placeholder="Select seller" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in sellers"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -90,9 +90,9 @@
           <el-select v-model="form.participants.buyer_agent_id" placeholder="Select buyer agent" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in buyerAgents"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -101,9 +101,9 @@
           <el-select v-model="form.participants.seller_agent_id" placeholder="Select seller agent" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in sellerAgents"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -112,9 +112,9 @@
           <el-select v-model="form.participants.buyer_lawyer_id" placeholder="Select buyer lawyer" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in buyerLawyers"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -123,9 +123,9 @@
           <el-select v-model="form.participants.seller_lawyer_id" placeholder="Select seller lawyer" style="width: 100%" filterable clearable>
             <el-option
               v-for="user in sellerLawyers"
-              :key="user.id"
+              :key="user._id"
               :label="formatUserLabel(user)"
-              :value="user.id"
+              :value="user._id"
             />
           </el-select>
         </el-form-item>
@@ -143,10 +143,40 @@
         <el-form-item label="Notes">
           <el-input v-model="form.notes" type="textarea" rows="3" />
         </el-form-item>
+
+        <el-divider content-position="left">Initial Deposit (Optional)</el-divider>
+
+        <el-form-item label="Include Deposit">
+          <el-switch v-model="form.include_deposit" />
+          <span style="margin-left: 8px; color: #909399; font-size: 13px;">Creates deal + deposit atomically via Saga Pattern</span>
+        </el-form-item>
+
+        <template v-if="form.include_deposit">
+          <el-form-item label="Deposit Amount" required>
+            <el-input-number v-model="form.deposit_amount" :min="1" :step="1000" style="width: 100%" />
+          </el-form-item>
+
+          <el-form-item label="Trust Account" required>
+            <el-select v-model="form.trust_account_number" placeholder="Select trust account" style="width: 100%" filterable>
+              <el-option
+                v-for="acct in trustAccounts"
+                :key="acct.id"
+                :label="`${acct.account_number} - ${acct.holder_name} ($${acct.balance?.toLocaleString()})`"
+                :value="acct.account_number"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="Description">
+            <el-input v-model="form.deposit_description" placeholder="Initial deposit" />
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">Cancel</el-button>
-        <el-button type="primary" @click="saveDeal" :disabled="!form.property_id || !form.offer_price">Create</el-button>
+        <el-button type="primary" @click="saveDeal" :disabled="!canCreate">
+          {{ form.include_deposit ? 'Create with Deposit (Saga)' : 'Create' }}
+        </el-button>
       </template>
     </el-dialog>
 
@@ -213,7 +243,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { dealsApi, propertiesApi, usersApi } from "../api"
+import { dealsApi, propertiesApi, usersApi, transactionsApi } from "../api"
 import type { Deal, Property, User } from "../types"
 
 interface DealForm {
@@ -230,6 +260,10 @@ interface DealForm {
     seller_lawyer_id: string
   }
   conditions: any[]
+  include_deposit: boolean
+  deposit_amount: number
+  trust_account_number: string
+  deposit_description: string
 }
 
 const deals = ref<Deal[]>([])
@@ -243,6 +277,7 @@ const selectedDeal = ref<Deal | null>(null)
 const newStatus = ref("")
 const statusNote = ref("")
 const filters = ref({ status: "" })
+const trustAccounts = ref<any[]>([])
 
 const form = ref<DealForm>({
   property_id: "",
@@ -257,7 +292,20 @@ const form = ref<DealForm>({
     buyer_lawyer_id: "",
     seller_lawyer_id: ""
   },
-  conditions: []
+  conditions: [],
+  include_deposit: false,
+  deposit_amount: 0,
+  trust_account_number: "",
+  deposit_description: "Initial deposit"
+})
+
+const canCreate = computed(() => {
+  if (!form.value.property_id || !form.value.offer_price) return false
+  if (form.value.include_deposit) {
+    if (!form.value.deposit_amount || form.value.deposit_amount <= 0) return false
+    if (!form.value.trust_account_number) return false
+  }
+  return true
 })
 
 // Filter users by role
@@ -333,6 +381,15 @@ const loadUsers = async () => {
   }
 }
 
+const loadTrustAccounts = async () => {
+  try {
+    const response = await transactionsApi.getTrustAccounts()
+    trustAccounts.value = response.data.accounts || response.data
+  } catch (err) {
+    console.error('Failed to load trust accounts:', err)
+  }
+}
+
 const openCreateDialog = () => {
   resetForm()
   showCreateDialog.value = true
@@ -402,8 +459,16 @@ const saveDeal = async () => {
       }
     })
 
-    await dealsApi.create(payload)
-    ElMessage.success("Deal created successfully")
+    if (form.value.include_deposit) {
+      payload.deposit_amount = form.value.deposit_amount
+      payload.trust_account_number = form.value.trust_account_number
+      payload.deposit_description = form.value.deposit_description || "Initial deposit"
+      await dealsApi.createWithDeposit(payload)
+      ElMessage.success("Deal + deposit created successfully (Saga)")
+    } else {
+      await dealsApi.create(payload)
+      ElMessage.success("Deal created successfully")
+    }
     showCreateDialog.value = false
     resetForm()
     loadDeals()
@@ -441,7 +506,11 @@ const resetForm = () => {
       buyer_lawyer_id: "",
       seller_lawyer_id: ""
     },
-    conditions: []
+    conditions: [],
+    include_deposit: false,
+    deposit_amount: 0,
+    trust_account_number: "",
+    deposit_description: "Initial deposit"
   }
 }
 
@@ -449,6 +518,7 @@ onMounted(() => {
   loadDeals()
   loadProperties()
   loadUsers()
+  loadTrustAccounts()
 })
 </script>
 

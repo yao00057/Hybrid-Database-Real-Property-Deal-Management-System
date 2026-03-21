@@ -72,6 +72,7 @@ export const dealsApi = {
   getAll: (params?: any) => api.get('/deals', { params }),
   getById: (id: string) => api.get(`/deals/${id}`),
   create: (data: any) => api.post('/deals', data),
+  createWithDeposit: (data: any) => api.post('/deals/with-deposit', data),
   update: (id: string, data: any) => api.put(`/deals/${id}`, data),
   delete: (id: string) => api.delete(`/deals/${id}`)
 }
