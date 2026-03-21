@@ -115,7 +115,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { userApi } from '../api/index'
+import { usersApi } from '../api/index'
 import type { User } from '../types'
 
 const users = ref<User[]>([])
@@ -152,7 +152,7 @@ const rules: FormRules = {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const response = await userApi.getAll(currentPage.value, pageSize, filterRole.value || undefined)
+    const response = await usersApi.getAll(currentPage.value, pageSize, filterRole.value || undefined)
     users.value = response.users
     total.value = response.total
   } catch (error) {
@@ -198,13 +198,13 @@ const saveUser = async () => {
     saving.value = true
     try {
       if (isEdit.value) {
-        await userApi.update(editingId.value, {
+        await usersApi.update(editingId.value, {
           profile: userForm.profile,
           role_specific: userForm.role_specific
         })
         ElMessage.success('User updated successfully')
       } else {
-        await userApi.create({
+        await usersApi.create({
           email: userForm.email,
           password: userForm.password,
           role: userForm.role as any,
@@ -230,7 +230,7 @@ const confirmDelete = (user: User) => {
     { type: 'warning' }
   ).then(async () => {
     try {
-      await userApi.delete(user._id)
+      await usersApi.delete(user._id)
       ElMessage.success('User deleted')
       loadUsers()
     } catch (error) {
