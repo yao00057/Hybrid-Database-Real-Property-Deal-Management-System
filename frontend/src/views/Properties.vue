@@ -247,8 +247,8 @@ const loadProperties = async () => {
     if (filters.max_price) params.max_price = filters.max_price
 
     const response = await propertiesApi.getAll(params)
-    properties.value = response.properties
-    total.value = response.total
+    properties.value = response.data.properties || response.data
+    total.value = response.data.total || 0
   } catch (error) {
     console.error('Failed to load properties:', error)
   } finally {
