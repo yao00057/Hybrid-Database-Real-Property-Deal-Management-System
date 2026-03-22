@@ -21,8 +21,8 @@
             ${{ row.amount?.toLocaleString() }}
           </template>
         </el-table-column>
-        <el-table-column prop="from_party" label="From" />
-        <el-table-column prop="to_party" label="To" />
+        <el-table-column prop="from_account" label="From" />
+        <el-table-column prop="to_account" label="To" />
         <el-table-column prop="status" label="Status">
           <template #default="{ row }">
             <el-tag :type="row.status === 'completed' ? 'success' : row.status === 'failed' ? 'danger' : 'warning'">
@@ -50,8 +50,8 @@
           </template>
           <el-table :data="trustAccounts" stripe>
             <el-table-column prop="id" label="ID" width="60" />
-            <el-table-column prop="account_name" label="Account Name" />
-            <el-table-column prop="account_holder" label="Holder" />
+            <el-table-column prop="account_number" label="Account Number" />
+            <el-table-column prop="holder_name" label="Holder" />
             <el-table-column prop="balance" label="Balance">
               <template #default="{ row }">
                 ${{ row.balance?.toLocaleString() }}
@@ -66,12 +66,12 @@
             <span>Recent Audit Logs</span>
           </template>
           <el-table :data="auditLogs" stripe size="small">
-            <el-table-column prop="table_name" label="Table" width="100" />
+            <el-table-column prop="entity_type" label="Table" width="100" />
             <el-table-column prop="action" label="Action" width="80" />
-            <el-table-column prop="performed_by" label="By" />
-            <el-table-column prop="performed_at" label="Time">
+            <el-table-column prop="user_id" label="By" />
+            <el-table-column prop="created_at" label="Time">
               <template #default="{ row }">
-                {{ new Date(row.performed_at).toLocaleString() }}
+                {{ new Date(row.created_at).toLocaleString() }}
               </template>
             </el-table-column>
           </el-table>
@@ -98,10 +98,10 @@
           <el-input-number v-model="form.amount" :min="0" :step="100" />
         </el-form-item>
         <el-form-item label="From Party">
-          <el-input v-model="form.from_party" />
+          <el-input v-model="form.from_account" />
         </el-form-item>
         <el-form-item label="To Party">
-          <el-input v-model="form.to_party" />
+          <el-input v-model="form.to_account" />
         </el-form-item>
         <el-form-item label="Description">
           <el-input v-model="form.description" type="textarea" />
@@ -115,11 +115,11 @@
 
     <el-dialog v-model="showTrustDialog" title="Create Trust Account" width="400px">
       <el-form :model="trustForm" label-width="120px">
-        <el-form-item label="Account Name">
-          <el-input v-model="trustForm.account_name" />
+        <el-form-item label="Account Number">
+          <el-input v-model="trustForm.account_number" />
         </el-form-item>
         <el-form-item label="Holder">
-          <el-input v-model="trustForm.account_holder" />
+          <el-input v-model="trustForm.holder_name" />
         </el-form-item>
         <el-form-item label="Initial Balance">
           <el-input-number v-model="trustForm.initial_balance" :min="0" />
@@ -150,14 +150,14 @@ const form = ref<TransactionCreate>({
   deal_id: "",
   transaction_type: "deposit",
   amount: 0,
-  from_party: "",
-  to_party: "",
+  from_account: "",
+  to_account: "",
   description: ""
 })
 
 const trustForm = ref({
-  account_name: "",
-  account_holder: "",
+  account_number: "",
+  holder_name: "",
   initial_balance: 0
 })
 
@@ -209,7 +209,7 @@ const saveTrustAccount = async () => {
     await transactionsApi.createTrustAccount(trustForm.value)
     ElMessage.success("Trust account created")
     showTrustDialog.value = false
-    trustForm.value = { account_name: "", account_holder: "", initial_balance: 0 }
+    trustForm.value = { account_number: "", holder_name: "", initial_balance: 0 }
     loadData()
   } catch {
     ElMessage.error("Failed to create trust account")
@@ -221,8 +221,8 @@ const resetForm = () => {
     deal_id: "",
     transaction_type: "deposit",
     amount: 0,
-    from_party: "",
-    to_party: "",
+    from_account: "",
+    to_account: "",
     description: ""
   }
 }

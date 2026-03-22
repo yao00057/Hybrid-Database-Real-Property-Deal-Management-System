@@ -23,7 +23,7 @@
       </el-row>
 
       <el-table :data="deals" stripe v-loading="loading">
-        <el-table-column prop="id" label="Deal ID" width="220" />
+        <el-table-column prop="_id" label="Deal ID" width="220" />
         <el-table-column prop="status" label="Status">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
@@ -43,7 +43,7 @@
           <template #default="{ row }">
             <el-button size="small" @click="viewDeal(row)">View</el-button>
             <el-button size="small" type="primary" @click="updateStatus(row)">Update</el-button>
-            <el-button size="small" type="danger" @click="deleteDeal(row.id)">Delete</el-button>
+            <el-button size="small" type="danger" @click="deleteDeal(row._id)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -183,7 +183,7 @@
     <el-dialog v-model="showDetailDialog" title="Deal Details" width="700px">
       <div v-if="selectedDeal">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="Deal ID">{{ selectedDeal.id }}</el-descriptions-item>
+          <el-descriptions-item label="Deal ID">{{ selectedDeal._id }}</el-descriptions-item>
           <el-descriptions-item label="Status">
             <el-tag :type="getStatusType(selectedDeal.status)">{{ selectedDeal.status }}</el-tag>
           </el-descriptions-item>
@@ -410,7 +410,7 @@ const updateStatus = (deal: Deal) => {
 const confirmStatusUpdate = async () => {
   if (!selectedDeal.value || !newStatus.value) return
   try {
-    await dealsApi.update(selectedDeal.value.id, {
+    await dealsApi.update(selectedDeal.value._id, {
       status: newStatus.value,
       note: statusNote.value || undefined
     })
