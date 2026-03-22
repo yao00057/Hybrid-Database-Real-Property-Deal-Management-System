@@ -383,8 +383,8 @@ const confirmConditionUpdate = async (conditionId: string, newStatus: string, co
 const updateCondition = async (conditionId: string, newStatus: string) => {
   if (!selectedDeal.value) return
   try {
-    const res = await dealsApi.updateCondition(selectedDeal.value._id, conditionId, { status: newStatus })
-    selectedDeal.value = res.data
+    const res = await dealsApi.updateCondition(selectedDeal.value.id, conditionId, { status: newStatus })
+    selectedDeal.value = { ...res.data, id: res.data._id }
     ElMessage.success(`Condition ${newStatus}`)
     loadDeals()
   } catch (err: any) {
@@ -400,8 +400,8 @@ const addConditionToDeal = async () => {
     return
   }
   try {
-    const res = await dealsApi.addCondition(selectedDeal.value._id, newCondition.value)
-    selectedDeal.value = res.data
+    const res = await dealsApi.addCondition(selectedDeal.value.id, newCondition.value)
+    selectedDeal.value = { ...res.data, id: res.data._id }
     showAddConditionDialog.value = false
     newCondition.value = { type: "financing", description: "" }
     ElMessage.success("Condition added")
@@ -507,7 +507,7 @@ const updateStatus = (deal: Deal) => {
 const confirmStatusUpdate = async () => {
   if (!selectedDeal.value || !newStatus.value) return
   try {
-    await dealsApi.updateStatus(selectedDeal.value._id, {
+    await dealsApi.updateStatus(selectedDeal.value.id, {
       status: newStatus.value,
       note: statusNote.value || undefined
     })
@@ -536,7 +536,7 @@ const saveDeal = async () => {
       property_id: form.value.property_id,
       offer_price: form.value.offer_price,
       participants: {},
-      conditions: []
+      conditions: form.value.conditions.filter((c: any) => c.description?.trim())
     }
 
     // Add optional fields

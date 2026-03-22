@@ -74,6 +74,9 @@ export const dealsApi = {
   create: (data: any) => api.post('/deals', data),
   createWithDeposit: (data: any) => api.post('/deals/with-deposit', data),
   update: (id: string, data: any) => api.put(`/deals/${id}`, data),
+  updateStatus: (id: string, data: any) => api.patch(`/deals/${id}/status`, data),
+  addCondition: (id: string, data: any) => api.post(`/deals/${id}/conditions`, data),
+  updateCondition: (id: string, condId: string, data: any) => api.patch(`/deals/${id}/conditions/${condId}`, data),
   delete: (id: string) => api.delete(`/deals/${id}`)
 }
 
