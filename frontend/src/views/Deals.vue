@@ -140,6 +140,23 @@
           <el-date-picker v-model="form.closing_date" type="date" placeholder="Select closing date" style="width: 100%" />
         </el-form-item>
 
+        <el-divider content-position="left">Conditions</el-divider>
+
+        <div v-for="(cond, index) in form.conditions" :key="index" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+          <el-select v-model="cond.type" placeholder="Type" style="width: 160px">
+            <el-option label="Financing" value="financing" />
+            <el-option label="Inspection" value="inspection" />
+            <el-option label="Appraisal" value="appraisal" />
+            <el-option label="Sale of Property" value="sale_of_property" />
+            <el-option label="Other" value="other" />
+          </el-select>
+          <el-input v-model="cond.description" placeholder="Description" style="flex: 1" />
+          <el-button type="danger" size="small" @click="form.conditions.splice(index, 1)">Remove</el-button>
+        </div>
+        <el-button size="small" @click="form.conditions.push({ type: 'financing', description: '' })">+ Add Condition</el-button>
+
+        <el-divider content-position="left">Notes</el-divider>
+
         <el-form-item label="Notes">
           <el-input v-model="form.notes" type="textarea" rows="3" />
         </el-form-item>
@@ -155,18 +172,11 @@
           <el-form-item label="Deposit Amount" required>
             <el-input-number v-model="form.deposit_amount" :min="1" :step="1000" style="width: 100%" />
           </el-form-item>
-
           <el-form-item label="Trust Account" required>
             <el-select v-model="form.trust_account_number" placeholder="Select trust account" style="width: 100%" filterable>
-              <el-option
-                v-for="acct in trustAccounts"
-                :key="acct.id"
-                :label="`${acct.account_number} - ${acct.holder_name} ($${acct.balance?.toLocaleString()})`"
-                :value="acct.account_number"
-              />
+              <el-option v-for="acct in trustAccounts" :key="acct.id" :label="`${acct.account_number} - ${acct.holder_name} ($${acct.balance?.toLocaleString()})`" :value="acct.account_number" />
             </el-select>
           </el-form-item>
-
           <el-form-item label="Description">
             <el-input v-model="form.deposit_description" placeholder="Initial deposit" />
           </el-form-item>
@@ -198,16 +208,28 @@
           <el-table-column prop="email" label="Email" />
         </el-table>
 
-        <h4 v-if="selectedDeal.conditions?.length">Conditions</h4>
+        <h4>Conditions</h4>
         <el-table v-if="selectedDeal.conditions?.length" :data="selectedDeal.conditions" stripe size="small">
           <el-table-column prop="type" label="Type" width="120" />
           <el-table-column prop="description" label="Description" />
           <el-table-column prop="status" label="Status" width="100">
             <template #default="{ row }">
-              <el-tag :type="row.status === 'satisfied' ? 'success' : 'warning'" size="small">{{ row.status }}</el-tag>
+              <el-tag :type="getConditionTagType(row.status)" size="small">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="Actions" width="180">
+            <template #default="{ row }">
+              <template v-if="row.status === 'pending'">
+                <el-button size="small" type="success" @click="confirmConditionUpdate(row.id, 'satisfied', row.type)">Satisfy</el-button>
+                <el-button size="small" type="warning" @click="confirmConditionUpdate(row.id, 'waived', row.type)">Waive</el-button>
+                <el-button size="small" type="danger" @click="confirmConditionUpdate(row.id, 'failed', row.type)">Fail</el-button>
+              </template>
+              <span v-else style="font-size: 12px;" :style="{ color: row.status === 'satisfied' ? '#27ae60' : row.status === 'failed' ? '#e74c3c' : '#999' }">{{ row.status }}</span>
             </template>
           </el-table-column>
         </el-table>
+        <el-empty v-else description="No conditions" :image-size="40" />
+        <el-button size="small" style="margin-top: 8px" @click="showAddConditionDialog = true" v-if="selectedDeal.status !== 'completed' && selectedDeal.status !== 'cancelled'">+ Add Condition</el-button>
 
         <h4>Status History</h4>
         <el-timeline>
@@ -220,6 +242,27 @@
           </el-timeline-item>
         </el-timeline>
       </div>
+    </el-dialog>
+
+    <el-dialog v-model="showAddConditionDialog" title="Add Condition" width="450px">
+      <el-form label-width="100px">
+        <el-form-item label="Type">
+          <el-select v-model="newCondition.type" style="width: 100%">
+            <el-option label="Financing" value="financing" />
+            <el-option label="Inspection" value="inspection" />
+            <el-option label="Appraisal" value="appraisal" />
+            <el-option label="Sale of Property" value="sale_of_property" />
+            <el-option label="Other" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Description">
+          <el-input v-model="newCondition.description" placeholder="e.g. Buyer mortgage approval" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddConditionDialog = false">Cancel</el-button>
+        <el-button type="primary" @click="addConditionToDeal" :disabled="!newCondition.description.trim()">Add</el-button>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="showStatusDialog" title="Update Status" width="400px">
@@ -278,6 +321,8 @@ const newStatus = ref("")
 const statusNote = ref("")
 const filters = ref({ status: "" })
 const trustAccounts = ref<any[]>([])
+const showAddConditionDialog = ref(false)
+const newCondition = ref({ type: "financing", description: "" })
 
 const form = ref<DealForm>({
   property_id: "",
@@ -315,6 +360,57 @@ const buyerAgents = computed(() => allUsers.value.filter(u => u.role === "buyer_
 const sellerAgents = computed(() => allUsers.value.filter(u => u.role === "seller_agent"))
 const buyerLawyers = computed(() => allUsers.value.filter(u => u.role === "buyer_lawyer"))
 const sellerLawyers = computed(() => allUsers.value.filter(u => u.role === "seller_lawyer"))
+
+const getConditionTagType = (status: string) => {
+  const types: Record<string, string> = {
+    pending: "warning", satisfied: "success", waived: "info", failed: "danger"
+  }
+  return types[status] || "info"
+}
+
+const confirmConditionUpdate = async (conditionId: string, newStatus: string, condType: string) => {
+  const actionText = newStatus === 'satisfied' ? 'satisfy' : newStatus === 'waived' ? 'waive' : 'fail'
+  try {
+    await ElMessageBox.confirm(
+      `Are you sure you want to ${actionText} the "${condType}" condition? This action cannot be undone.`,
+      `Confirm ${actionText}`,
+      { type: newStatus === 'failed' ? 'error' : 'warning', confirmButtonText: actionText.charAt(0).toUpperCase() + actionText.slice(1), cancelButtonText: 'Cancel' }
+    )
+    await updateCondition(conditionId, newStatus)
+  } catch { /* user cancelled */ }
+}
+
+const updateCondition = async (conditionId: string, newStatus: string) => {
+  if (!selectedDeal.value) return
+  try {
+    const res = await dealsApi.updateCondition(selectedDeal.value._id, conditionId, { status: newStatus })
+    selectedDeal.value = res.data
+    ElMessage.success(`Condition ${newStatus}`)
+    loadDeals()
+  } catch (err: any) {
+    const msg = err.response?.data?.detail || "Failed to update condition"
+    ElMessageBox.alert(msg, "Cannot Update Condition", { type: "error" })
+  }
+}
+
+const addConditionToDeal = async () => {
+  if (!selectedDeal.value) return
+  if (!newCondition.value.description.trim()) {
+    ElMessage.warning("Please enter a condition description")
+    return
+  }
+  try {
+    const res = await dealsApi.addCondition(selectedDeal.value._id, newCondition.value)
+    selectedDeal.value = res.data
+    showAddConditionDialog.value = false
+    newCondition.value = { type: "financing", description: "" }
+    ElMessage.success("Condition added")
+    loadDeals()
+  } catch (err: any) {
+    const msg = err.response?.data?.detail || "Failed to add condition"
+    ElMessageBox.alert(msg, "Cannot Add Condition", { type: "error" })
+  }
+}
 
 const getStatusType = (status: string) => {
   const types: Record<string, string> = {
@@ -411,7 +507,7 @@ const updateStatus = (deal: Deal) => {
 const confirmStatusUpdate = async () => {
   if (!selectedDeal.value || !newStatus.value) return
   try {
-    await dealsApi.update(selectedDeal.value.id, {
+    await dealsApi.updateStatus(selectedDeal.value._id, {
       status: newStatus.value,
       note: statusNote.value || undefined
     })
@@ -481,14 +577,18 @@ const saveDeal = async () => {
 
 const deleteDeal = async (id: string) => {
   try {
-    await ElMessageBox.confirm("Delete this deal? Only draft deals can be deleted.", "Warning", { type: "warning" })
+    await ElMessageBox.confirm(
+      "Are you sure? This will permanently delete this deal. Only draft deals without linked financial transactions can be deleted.",
+      "Confirm Delete",
+      { type: "warning", confirmButtonText: "Delete", cancelButtonText: "Cancel" }
+    )
     await dealsApi.delete(id)
     ElMessage.success("Deal deleted")
     loadDeals()
   } catch (error: any) {
     if (error !== "cancel") {
       const msg = error.response?.data?.detail || "Failed to delete deal"
-      ElMessage.error(msg)
+      ElMessageBox.alert(msg, "Cannot Delete Deal", { type: "error", confirmButtonText: "OK" })
     }
   }
 }

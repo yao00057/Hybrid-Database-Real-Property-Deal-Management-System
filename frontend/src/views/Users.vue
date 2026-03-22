@@ -152,9 +152,11 @@ const rules: FormRules = {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const response = await usersApi.getAll(currentPage.value, pageSize, filterRole.value || undefined)
-    users.value = response.users
-    total.value = response.total
+    const params: any = { page: currentPage.value, page_size: pageSize }
+    if (filterRole.value) params.role = filterRole.value
+    const response = await usersApi.getAll(params)
+    users.value = response.data.users || response.data
+    total.value = response.data.total || 0
   } catch (error) {
     console.error('Failed to load users:', error)
   } finally {
