@@ -24,6 +24,11 @@
 
       <el-table :data="deals" stripe v-loading="loading">
         <el-table-column prop="id" label="Deal ID" width="220" />
+        <el-table-column label="Property">
+          <template #default="{ row }">
+            {{ getPropertyLabel(row.property_id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="Status">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
@@ -197,6 +202,7 @@
           <el-descriptions-item label="Status">
             <el-tag :type="getStatusType(selectedDeal.status)">{{ selectedDeal.status }}</el-tag>
           </el-descriptions-item>
+          <el-descriptions-item label="Property">{{ getPropertyLabel(selectedDeal.property_id) }}</el-descriptions-item>
           <el-descriptions-item label="Offer">${{ selectedDeal.offer_price?.toLocaleString() }}</el-descriptions-item>
           <el-descriptions-item label="Closing Date">{{ selectedDeal.closing_date || 'Not set' }}</el-descriptions-item>
         </el-descriptions>
@@ -430,6 +436,13 @@ const formatUserLabel = (user: User) => {
   return `${user.profile?.name || user.email} (${user.role})`
 }
 
+const getPropertyLabel = (propertyId: string) => {
+  const prop = properties.value.find((p: any) => p._id === propertyId)
+  if (!prop) return propertyId
+  const addr = prop.address
+  return `${addr?.street || 'Unknown'}, ${addr?.city || ''}`
+}
+
 const formatDate = (date: string) => {
   if (!date) return ''
   return new Date(date).toLocaleString()
@@ -462,7 +475,7 @@ const loadDeals = async () => {
 
 const loadProperties = async () => {
   try {
-    const response = await propertiesApi.getAll({ status: 'active', page_size: 100 })
+    const response = await propertiesApi.getAll({ page_size: 100 })
     properties.value = response.data.properties || response.data
   } catch (err) {
     console.error('Failed to load properties:', err)
