@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from bson import ObjectId
 import logging
 
@@ -126,7 +126,7 @@ class DealService:
         page_size: int = 10,
         status: Optional[str] = None,
         property_id: Optional[str] = None
-    ) -> tuple[List[DealResponse], int]:
+    ) -> Tuple[List[DealResponse], int]:
         query = {}
         if status:
             query["status"] = status
@@ -183,6 +183,16 @@ class DealService:
             raise ValueError(
                 f"Invalid status transition from {current_status.value} to {new_status.value}"
             )
+
+        # Business rule: cannot complete a deal with pending conditions
+        if new_status == DealStatus.completed:
+            conditions = deal.get("conditions", [])
+            pending = [c for c in conditions if c.get("status") == "pending"]
+            if pending:
+                raise ValueError(
+                    f"Cannot complete deal: {len(pending)} condition(s) are still pending. "
+                    f"All conditions must be satisfied or waived before completing."
+                )
 
         update_doc = {
             "status": new_status.value,
@@ -246,6 +256,16 @@ class DealService:
     ) -> Optional[DealResponse]:
         if not ObjectId.is_valid(deal_id):
             return None
+
+        # Only pending conditions can be updated
+        deal = await self.deals.find_one({"_id": ObjectId(deal_id)})
+        if deal:
+            cond = next((c for c in deal.get("conditions", []) if c["id"] == condition_id), None)
+            if cond and cond["status"] != "pending":
+                raise ValueError(
+                    f"Cannot update condition: status is already '{cond['status']}'. "
+                    f"Only pending conditions can be modified."
+                )
 
         update_fields = {
             "conditions.$.status": update.status.value,

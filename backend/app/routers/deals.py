@@ -219,7 +219,10 @@ async def update_condition(deal_id: str, condition_id: str, update: ConditionUpd
     validate_object_id(deal_id, "deal_id")
     
     service = DealService()
-    deal = await service.update_condition(deal_id, condition_id, update)
+    try:
+        deal = await service.update_condition(deal_id, condition_id, update)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not deal:
         raise HTTPException(status_code=404, detail="Deal or condition not found")
     return deal
