@@ -68,7 +68,11 @@
           <el-table :data="auditLogs" stripe size="small">
             <el-table-column prop="entity_type" label="Table" width="100" />
             <el-table-column prop="action" label="Action" width="80" />
-            <el-table-column prop="user_id" label="By" />
+            <el-table-column label="By">
+              <template #default="{ row }">
+                {{ row.user_id || 'System' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="created_at" label="Time">
               <template #default="{ row }">
                 {{ new Date(row.created_at).toLocaleString() }}
@@ -87,11 +91,10 @@
         <el-form-item label="Type">
           <el-select v-model="form.transaction_type">
             <el-option label="Deposit" value="deposit" />
+            <el-option label="Payment" value="payment" />
+            <el-option label="Refund" value="refund" />
             <el-option label="Commission" value="commission" />
-            <el-option label="Legal Fee" value="legal_fee" />
-            <el-option label="Tax" value="tax" />
             <el-option label="Adjustment" value="adjustment" />
-            <el-option label="Disbursement" value="disbursement" />
           </el-select>
         </el-form-item>
         <el-form-item label="Amount">
